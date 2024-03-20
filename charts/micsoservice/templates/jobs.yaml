@@ -1,0 +1,54 @@
+
+{{- if .Values.migration.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "appname" . }}-migration
+  namespace: {{ .Release.Namespace }}
+  {{- include "migration.labels" . | indent 2 }}
+  {{- include "migration.annotations" . | indent 2 }}
+spec:
+  template:
+    metadata:
+      {{- include "migration.labels" . | indent 6 }}
+      {{- include "migration.annotations" . | indent 6 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ .Values.serviceAccount }}
+      nodeSelector:
+        iam.gke.io/gke-metadata-server-enabled: "true"
+      containers:
+        - name: {{ include "appname" . }}
+          image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          ports:
+        {{- if ne .Values.internalPort 0 }}
+          - containerPort: {{ .Values.internalPort }}
+        {{- end }}
+        {{- if eq .Values.debug.enabled true }}
+          - containerPort: {{ .Values.debug.port }}
+        {{- end }}
+        {{- if ne .Values.debug.enabled true }}
+          resources:
+            requests:
+              cpu: {{ .Values.min_cpu }}
+            limits:
+              cpu: {{ .Values.max_cpu }}
+        {{- end }}
+        {{- if eq .Values.debug.enabled true }}
+          command:
+            {{ range $arg:= .Values.debug.command }}
+            - {{$arg | quote}}
+            {{- end }}
+        {{- else }}
+          command:
+            {{ range $arg:= .Values.migration.command }}
+            - {{$arg | quote}}
+            {{- end }}
+        {{- end }}
+          env:
+        {{- range $key,$value:= .Values.parameters }}
+          - name: {{ upper $key | replace "-" "_" }}
+            value: {{ $value | quote }}
+        {{- end }}
+{{- end }}

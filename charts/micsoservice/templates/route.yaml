@@ -1,0 +1,46 @@
+{{- if eq .Values.expose true }}
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: {{ printf "%s-route" .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  parentRefs:
+    - kind: Gateway
+      name: api-gateway-foundation
+  hostnames:
+    - {{ .Values.global.hostname}}
+  rules:
+    - matches:
+      - path:
+          type: PathPrefix
+        {{- if eq .Values.route "" }}
+          value: {{ printf "/%" .Release.Name }}
+        {{- else }}
+          value: {{ printf "%s" .Values.route }}
+        {{- end }}
+      filters:
+      - type: URLRewrite
+        urlRewrite:
+          path:
+            type: ReplacePrefixMatch
+            replacePrefixMatch: /
+      backendRefs:
+      - name: {{ include "appname" . }}
+        port: {{  $.Values.internalPort }}
+    {{- range $key,$value:= .Values.redirects }}
+      - matches:
+        - path:
+            type: PathPrefix
+            value: {{ $key }}
+        filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: {{ $value }}
+        backendRefs:
+        - name: {{ include "appname" . }}
+          port: {{  $.Values.internalPort }}
+    {{- end }}
+{{- end }}

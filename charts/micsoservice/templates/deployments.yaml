@@ -1,0 +1,113 @@
+{{- /* microservice deployment */}}
+
+{{ define "probe" }}
+{{- if .Values.probe_config.httpGet }}
+httpGet:
+  path: {{ .Values.probe_config.httpGet.path }}
+  port: {{ .Values.probe_config.httpGet.port }}
+{{- else if .Values.probe_config.tcpSocket}}
+tcpSocket:
+  port: {{ .Values.probe_config.tcpSocket.port }}
+{{- else if .Values.probe_config.exec }}
+exec:
+  command:
+    {{- range $i := .Values.probe_config.exec.command}}
+    - {{ $i }}
+    {{- end }}
+{{- end }}
+{{- end }}
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+{{- include "all.labels" . | indent 2 }}
+{{- include "common.annotations" . | indent 2 }}
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.rolloutSurge }}
+      maxUnavailable: {{ .Values.rolloutUnavailable }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  replicas: {{ .Values.min_replicas }}
+  template:
+    metadata:
+        {{- include "all.labels" . | indent 6 }}
+        app: {{ .Release.Name }}
+        {{- include "common.annotations" . | indent 6 }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount }}
+      nodeSelector:
+        iam.gke.io/gke-metadata-server-enabled: "true"
+      containers:
+        - name: {{ .Release.Name }}
+          image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          ports:
+        {{- if ne .Values.internalPort 0 }}
+          - containerPort: {{ .Values.internalPort }}
+        {{- end }}
+        {{- if eq .Values.debug.enabled true }}
+          - containerPort: {{ .Values.debug.port }}
+        {{- end }}
+      {{- if .Values.probe_config }}
+        {{- if .Values.startupProbe }}
+          startupProbe:
+            periodSeconds: {{ .Values.startupProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.startupProbe.failureThreshold }}
+            {{- include "probe" . | indent 12}}
+        {{- end }}
+        {{- if .Values.livenessProbe }}
+          livenessProbe:
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            {{- include "probe" . | indent 12}}
+        {{- end }}
+        {{- if .Values.readinessProbe }}
+          readinessProbe:
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            {{- include "probe" . | indent 12}}
+        {{- end }}
+      {{- end }}
+        {{- if ne .Values.debug.enabled true }}
+          resources:
+            requests:
+              cpu: {{ .Values.min_cpu }}
+            limits:
+              cpu: {{ .Values.max_cpu }}
+        {{- end }}
+        {{- if eq .Values.debug.enabled true }}
+          command:
+            {{ range $arg:= .Values.debug.command }}
+            - {{$arg | quote}}
+            {{- end }}
+        {{- end }}
+          env:
+        {{- range $key,$value:= .Values.parameters }}
+          - name: {{ upper $key | replace "-" "_" }}
+            value: {{ $value | quote }}
+        {{- end }}
+    {{- if eq .Values.init_container.enabled true }}
+      initContainers:
+        - name: {{ .Release.Name }}-db-migrator
+          image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          command:
+            {{ range $arg:= .Values.init_container.command }}
+            - {{$arg | quote}}
+            {{- end }}
+          env:
+        {{- range $key,$value:= .Values.parameters }}
+          - name: {{ upper $key | replace "-" "_" }}
+            value: {{ $value | quote }}
+        {{- end }}
+    {{- end }}
