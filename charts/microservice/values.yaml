@@ -89,7 +89,8 @@ health_endpoint: /health
 ## Ensure for it not to be 0 if you set expose = true
 ## Example:
 ## internalPort: 5000
-internalPort: 0
+internalPort:
+
 
 
 ## Define URL redirects. Example:
@@ -101,7 +102,7 @@ redirects:
 
 # Define  migration configs, to be serem run before the deployment
 migration:
-  enabled: true
+  enabled: false
   command:
     - sleep
     - 30
@@ -116,44 +117,46 @@ migration:
 ## Refe
 ##
 ## Examples
-# probe_config:
+# probeConfig:
 #   exec:
 #     command:
 #       - node
 #       - scripts/health.js
 #
-# probe_config:
+# probeConfig:
 #   tcpSocket:
 #     port: 1234
 #
-# probe_config:
+# probeConfig:
 #   httpGet:
 #     path: /health
 #     port: 5000
 #
-## Leave it blank to disable some probe. For instance, the config below disable all probes
-## startupProbe:
-## livenessProbe:
-## readinessProbe:
+#
+# startupProbe:
+#   periodSeconds: 10
+#   timeoutSeconds: 5
+#   failureThreshold: 5
+# livenessProbe:
+#   periodSeconds: 10
+#   timeoutSeconds: 5
+#   failureThreshold: 5
+# readinessProbe:
+#   periodSeconds: 10
+#   timeoutSeconds: 5
+#   failureThreshold: 5
 ##
 ## periodSeconds: Frequency of the probe. Example, every 10s
 ## timeoutSeconds: How long we wait for a response before considering the probe as failed. Example: timeout of 5s
 ## failureThreshold: after how many failures we consider the state as unhealthy.
 ## For instance, after 3 failures of the liveness probe, we restart the app, but only after 1 failure we stop sending traffic with the readiness probe
 ## Ref/ https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
-startupProbe:
-  periodSeconds: 10
-  timeoutSeconds: 5
-  failureThreshold: 5
-livenessProbe:
-  periodSeconds: 10
-  timeoutSeconds: 5
-  failureThreshold: 5
-readinessProbe:
-  periodSeconds: 10
-  timeoutSeconds: 5
-  failureThreshold: 5
 
+## Fill the config below with your probes as described above
+probeConfig:
+startupProbe:
+livenessProbe:
+readinessProbe:
 
 # Define the command of an init container, it has the same image of the pod
 # Ref https://kubernetes.io/docs/concepts/workloads/pods/init-containers/

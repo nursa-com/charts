@@ -8,7 +8,7 @@ spec:
   selector:
     app: {{ include "appname" . }}
   ports:
-{{- if ne .Values.internalPort 0 }}
+{{- if .Values.internalPort }}
   - name: {{ include "appname" . }}-port
     protocol: TCP
     port: {{ .Values.internalPort }}
