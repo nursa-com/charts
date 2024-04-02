@@ -1,4 +1,4 @@
 apiVersion: v2
-description: Template para microservico
+description: Microservice template
 name: microservice
 version: 1.0.0
