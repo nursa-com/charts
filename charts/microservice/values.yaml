@@ -2,7 +2,6 @@ global:
   project_id: "project_id"
   env: "env"
   app_version: "1.0.0"
-  api_gateway_hostname: "api.env.nursa.com"
   overrideName: ""
 
 ## Define Environment Variables. Example:
@@ -44,34 +43,45 @@ serviceAccount: ""
 service:
   type: ClusterIP
 
+## Container internal port to expose the service
+## If you don't want to expose any ports, just leave the value as 0
+## Ensure for it not to be 0 if you set expose = true
+## Example:
+## internalPort: 5000
+  internalPort:
+
+# ----- Autoscaling ------
 ## Define resource limits, for min and max of memory/CPU. This is related to vertical scaling.
 ## Vide https://kubernetes.io/docs/tasks/configure-pod-container/quality-service-pod/
-min_memory: 100Mi
-max_memory: 200Mi
-min_cpu: 100m
-max_cpu: 200m
+autoscaling:
+  min_memory: 100Mi
+  max_memory: 200Mi
+  min_cpu: 100m
+  max_cpu: 200m
 
 ## For scale-up/down operation, define the number of replicas of the app.
 ## We recommend for the minimum to be 2 or more, unless there is a specific need for a single replica.
 ## For instance, the cron scheduler app needs to have a single replica because of its nature.
 ## Cluster infrastructure scaling depends on highly available workloads for its operations
-min_replicas: 2
-max_replicas: 2
+  min_replicas: 2
+  max_replicas: 2
 
 ## For horizontal scale-up e scale-down operations, define the % to trigger it
-cpu_percentage_trigger: 80
-ram_percentage_trigger: 80
+  cpu_percentage_trigger: 80
+  ram_percentage_trigger: 80
 
 
+## ----- Deployment ------
 ## For rollout definitions, rolloutSurge adds a fraction of existing pods in the process of releasing a new verion
 ## For instance, a rolloutSurge of 50% and 4 running pods, a new deploy adds 2 pods, when they are ready, we delete 2 from the old deployment, and so on
-rolloutSurge: 50%
+deployment:
+  rolloutSurge: 50%
 
 ## How many pods it's acceptable (or % of pods) to be unavailable in the rollout operation
 ## For instance, a rolloutUnavailable of 50% e 4 pods, a new deployment will start deleting 2 pods at the same time of adding new pods
 ## from the rolloutSurge
 # rolloutUnavailable: 20%
-rolloutUnavailable: 0
+  rolloutUnavailable: 0
 
 ## Define the route to expose your app in API Gateway
 ## Example:
@@ -80,25 +90,19 @@ rolloutUnavailable: 0
 ## This configuration means that the requests to the <api_gateway>/<route> will
 ## be routed to this app. Must be globally unique accross all microservices.
 ## Set it to false if you don't need to expose the service to the API Gateway
-expose: false
-route: /myappname
-health_endpoint: /health
-
-## Container internal port to expose the service
-## If you don't want to expose any ports, just leave the value as 0
-## Ensure for it not to be 0 if you set expose = true
-## Example:
-## internalPort: 5000
-internalPort:
-
-
+api_gateway:
+  expose: false
+  hostname: "api.env.nursa.com"
+  route: /myappname
+  health_endpoint: /health
 
 ## Define URL redirects. Example:
 ## /api: /api/v1
 ## the example above redirects requests com from /api/** to /api/v1/**
 ##
 ## Leave it blank if there are no redirects
-redirects:
+  redirects:
+
 
 # Define  migration configs, to be serem run before the deployment
 migration:

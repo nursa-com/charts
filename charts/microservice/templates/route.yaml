@@ -1,4 +1,4 @@
-{{- if eq .Values.expose true }}
+{{- if eq .Values.api_gateway.expose true }}
 kind: HTTPRoute
 apiVersion: gateway.networking.k8s.io/v1beta1
 metadata:
@@ -9,7 +9,7 @@ spec:
     - kind: Gateway
       name: api-gateway-foundation
   hostnames:
-    - {{ .Values.global.hostname}}
+    - {{ .Values.api_gateway.hostname}}
   rules:
     - matches:
       - path:
@@ -17,7 +17,7 @@ spec:
         {{- if eq .Values.route "" }}
           value: {{ printf "/%" .Release.Name }}
         {{- else }}
-          value: {{ printf "%s" .Values.route }}
+          value: {{ printf "%s" .Values.api_gateway.route }}
         {{- end }}
       filters:
       - type: URLRewrite
@@ -27,8 +27,8 @@ spec:
             replacePrefixMatch: /
       backendRefs:
       - name: {{ include "appname" . }}
-        port: {{  $.Values.internalPort }}
-    {{- range $key,$value:= .Values.redirects }}
+        port: {{  $.Values.service.internalPort }}
+    {{- range $key,$value:= .Values.api_gateway.redirects }}
       - matches:
         - path:
             type: PathPrefix
@@ -41,6 +41,6 @@ spec:
               replacePrefixMatch: {{ $value }}
         backendRefs:
         - name: {{ include "appname" . }}
-          port: {{  $.Values.internalPort }}
+          port: {{  $.Values.service.internalPort }}
     {{- end }}
 {{- end }}

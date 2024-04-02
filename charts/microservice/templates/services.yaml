@@ -8,11 +8,11 @@ spec:
   selector:
     app: {{ include "appname" . }}
   ports:
-{{- if .Values.internalPort }}
+{{- if .Values.service.internalPort }}
   - name: {{ include "appname" . }}-port
     protocol: TCP
-    port: {{ .Values.internalPort }}
-    targetPort: {{ .Values.internalPort }}
+    port: {{ .Values.service.internalPort }}
+    targetPort: {{ .Values.service.internalPort }}
 {{- end }}
 {{- if eq .Values.debug.enabled true }}
   - name: {{ include "appname" . }}-debug-port
@@ -23,7 +23,7 @@ spec:
 
 ---
 
-{{- if and (eq .Values.expose true) (ne .Values.health_endpoint nil) }}
+{{- if and (eq .Values.api_gateway.expose true) (ne .Values.api_gateway.health_endpoint nil) }}
 apiVersion: networking.gke.io/v1
 kind: HealthCheckPolicy
 metadata:
@@ -40,9 +40,9 @@ spec:
       type: HTTP
       httpHealthCheck:
         portSpecification: USE_FIXED_PORT
-        port: {{ .Values.internalPort }}
+        port: {{ .Values.service.internalPort }}
         host: "gcp-lb-health-check"
-        requestPath: {{ .Values.health_endpoint }}
+        requestPath: {{ .Values.api_gateway.health_endpoint }}
   targetRef:
     group: ""
     kind: Service

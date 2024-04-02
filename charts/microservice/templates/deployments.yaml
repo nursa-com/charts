@@ -11,12 +11,12 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: {{ .Values.rolloutSurge }}
-      maxUnavailable: {{ .Values.rolloutUnavailable }}
+      maxSurge: {{ .Values.deployment.rolloutSurge }}
+      maxUnavailable: {{ .Values.deployment.rolloutUnavailable }}
   selector:
     matchLabels:
       app: {{ .Release.Name }}
-  replicas: {{ .Values.min_replicas }}
+  replicas: {{ .Values.autoscaling.min_replicas }}
   template:
     metadata:
         {{- include "all.labels" . | indent 6 }}
@@ -31,8 +31,8 @@ spec:
           image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           ports:
-        {{- if .Values.internalPort }}
-          - containerPort: {{ .Values.internalPort }}
+        {{- if .Values.service.internalPort }}
+          - containerPort: {{ .Values.service.internalPort }}
         {{- end }}
         {{- if and (eq .Values.debug.enabled true) .Values.debug.port }}
           - containerPort: {{ .Values.debug.port }}
@@ -51,9 +51,9 @@ spec:
         {{- if ne .Values.debug.enabled true }}
           resources:
             requests:
-              cpu: {{ .Values.min_cpu }}
+              cpu: {{ .Values.autoscaling.min_cpu }}
             limits:
-              cpu: {{ .Values.max_cpu }}
+              cpu: {{ .Values.autoscaling.max_cpu }}
         {{- end }}
         {{- if eq .Values.debug.enabled true }}
           command:

@@ -22,8 +22,8 @@ spec:
           image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           ports:
-        {{- if .Values.internalPort }}
-          - containerPort: {{ .Values.internalPort }}
+        {{- if .Values.service.internalPort }}
+          - containerPort: {{ .Values.service.internalPort }}
         {{- end }}
         {{- if eq .Values.debug.enabled true }}
           - containerPort: {{ .Values.debug.port }}
@@ -31,9 +31,9 @@ spec:
         {{- if ne .Values.debug.enabled true }}
           resources:
             requests:
-              cpu: {{ .Values.min_cpu }}
+              cpu: {{ .Values.autoscaling.min_cpu }}
             limits:
-              cpu: {{ .Values.max_cpu }}
+              cpu: {{ .Values.autoscaling.max_cpu }}
         {{- end }}
         {{- if eq .Values.debug.enabled true }}
           command:
