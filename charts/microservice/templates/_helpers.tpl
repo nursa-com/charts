@@ -6,6 +6,7 @@
 {{- .Release.Name }}
 {{- end }}
 {{- end }}
+#TODO review approach of appname
 
 #-------------------------------------------------------------------------------
 #---- DEFINING LABELS                                                      ----
