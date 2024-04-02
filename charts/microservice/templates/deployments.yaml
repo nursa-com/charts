@@ -5,8 +5,8 @@ kind: Deployment
 metadata:
   name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
-{{- include "all.labels" . | indent 2 }}
-{{- include "common.annotations" . | indent 2 }}
+  {{- include "all.labels" . | indent 2 }}
+  {{- include "common.annotations" . | indent 2 }}
 spec:
   strategy:
     type: RollingUpdate
