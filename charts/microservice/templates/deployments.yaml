@@ -1,0 +1,85 @@
+{{- /* microservice deployment */}}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  {{- include "all.labels" . | indent 2 }}
+  {{- include "common.annotations" . | indent 2 }}
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.deployment.rolloutSurge }}
+      maxUnavailable: {{ .Values.deployment.rolloutUnavailable }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  replicas: {{ .Values.autoscaling.min_replicas }}
+  template:
+    metadata:
+        {{- include "all.labels" . | indent 6 }}
+        app: {{ .Release.Name }}
+        {{- include "common.annotations" . | indent 6 }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount }}
+      nodeSelector:
+        iam.gke.io/gke-metadata-server-enabled: "true"
+      containers:
+        - name: {{ .Release.Name }}
+          image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          ports:
+        {{- if .Values.service.internalPort }}
+          - containerPort: {{ .Values.service.internalPort }}
+        {{- end }}
+        {{- if and (eq .Values.debug.enabled true) .Values.debug.port }}
+          - containerPort: {{ .Values.debug.port }}
+        {{- end }}
+      {{- if .Values.probeConfig }}
+        {{- if .Values.startupProbe }}
+          startupProbe: {{- toYaml .Values.probeConfig | nindent 12 }} {{- toYaml .Values.startupProbe | nindent 12 }}
+        {{- end }}
+        {{- if .Values.livenessProbe }}
+          livenessProbe: {{- toYaml .Values.probeConfig | nindent 12 }} {{- toYaml .Values.livenessProbe | nindent 12 }}
+        {{- end }}
+        {{- if .Values.readinessProbe }}
+          readinessProbe: {{- toYaml .Values.probeConfig | nindent 12 }} {{- toYaml .Values.readinessProbe | nindent 12 }}
+        {{- end }}
+      {{- end }}
+        {{- if ne .Values.debug.enabled true }}
+          resources:
+            requests:
+              cpu: {{ .Values.autoscaling.min_cpu }}
+            limits:
+              cpu: {{ .Values.autoscaling.max_cpu }}
+        {{- end }}
+        {{- if eq .Values.debug.enabled true }}
+          command:
+            {{ range $arg:= .Values.debug.command }}
+            - {{$arg | quote}}
+            {{- end }}
+        {{- end }}
+          env:
+        {{- range $key,$value:= .Values.parameters }}
+          - name: {{ upper $key | replace "-" "_" }}
+            value: {{ $value | quote }}
+        {{- end }}
+    {{- if eq .Values.init_container.enabled true }}
+      initContainers:
+        - name: {{ .Release.Name }}-db-migrator
+          image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          command:
+            {{ range $arg:= .Values.init_container.command }}
+            - {{$arg | quote}}
+            {{- end }}
+          env:
+          - name: APP
+            value: {{ .Release.Name }}
+        {{- range $key,$value:= .Values.parameters }}
+          - name: {{ upper $key | replace "-" "_" }}
+            value: {{ $value | quote }}
+        {{- end }}
+    {{- end }}

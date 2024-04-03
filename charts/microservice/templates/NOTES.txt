@@ -1,0 +1,42 @@
+
+
+
+☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸
+
+    ☸☸    ☸☸    ☸☸☸☸☸☸☸☸    ☸☸         ☸☸☸     ☸☸☸
+    ☸☸    ☸☸    ☸☸          ☸☸         ☸☸ ☸☸ ☸☸ ☸☸
+    ☸☸☸☸☸☸☸☸    ☸☸☸☸☸☸      ☸☸         ☸☸  ☸☸☸  ☸☸
+    ☸☸    ☸☸    ☸☸          ☸☸         ☸☸       ☸☸
+    ☸☸    ☸☸    ☸☸☸☸☸☸☸☸    ☸☸☸☸☸☸☸    ☸☸       ☸☸
+
+☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸
+                                        by dev-enablement
+
+😀 Thanks 😀 You just installed the: {{ .Chart.Name }}.
+
+This deployment can be --atomic if you use the flag --atomic ⚛
+
+Atomic is the default behavior for pipelines. It means that the rollback
+happens automatically if the deployment is not successful.
+
+❗❗❗❗❗ INFO ❗❗❗❗❗
+This chart has the following components:
+
+Migration:
+    🔅 A job that will run a migration if you set migration.enabled in the values
+
+Release:
+    🔅 Service Account: {{ include "appname" . }}
+    🔅 Deployment
+    🔅 PDB (Pod Disruption Budget = 1)
+    🔅 Service
+    🔅 Multidimensional Pod Autoscaler (MPA)
+    🔅 HTTP Route to the API Gateway if you set expose = true
+    🔅 Load Balancer Health Check, if defined
+
+🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍
+EXPLORE!
+
+Your microservice logs are found here:
+
+https://us5.datadoghq.com/logs?query=env%3A{{.Values.global.env}}%20kube_namespace%3A{{.Release.Namespace}}%20service%3A{{.Release.Name}}&cols=kube_namespace%2Cservice&fromUser=true&index=%2A&messageDisplay=inline&refresh_mode=sliding&saved-view-id=3413&storage=hot&stream_sort=desc

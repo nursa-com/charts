@@ -1,0 +1,171 @@
+global:
+  project_id: "project_id"
+  env: "env"
+  app_version: "1.0.0"
+  overrideName: ""
+
+## Define Environment Variables. Example:
+## ENV: dev
+parameters: {}
+
+
+## Define app image information
+## Example:
+## image: gcr.io/nursa-prod/microservice
+## image_tag: v1.2.3
+## imagePullPolicy: Always
+image: ubuntu
+image_tag: latest
+imagePullPolicy: Always
+
+## Start the app in debug mode, overriding the entrypoint command
+## Change this accordingly to your needs.
+## The configuration below is disabled, but sleep infinity is a good debug command
+## For the container to start and you can SSH into it to debug the internals
+## You can expose an additional port if you need other commands or more powerful debug options, such as attaching a debugger
+debug:
+  enabled: false
+  command:
+    - sleep
+    - infinity
+  port: 10000
+
+## Service Account name for the app. The service account is required for every app.
+## We can integrate with Google Service Accounts so the app has access to google services by Identity Workload Federation.
+## Ref. https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity
+## For the Workload Identity Federation to work, the service account needs to have a binding in place from google side.
+## Example:
+## serviceAccount: microservice-sa
+serviceAccount: ""
+
+## Type of Kubernetes service to connect to the app. ClusterIP is the default, but all others are supported.
+## Check https://kubernetes.io/docs/concepts/services-networking/service/
+service:
+  type: ClusterIP
+
+## Container internal port to expose the service
+## If you don't want to expose any ports, just leave the value as 0
+## Ensure for it not to be 0 if you set expose = true
+## Example:
+## internalPort: 5000
+  internalPort:
+
+# ----- Autoscaling ------
+## Define resource limits, for min and max of memory/CPU. This is related to vertical scaling.
+## Vide https://kubernetes.io/docs/tasks/configure-pod-container/quality-service-pod/
+autoscaling:
+  min_memory: 100Mi
+  max_memory: 200Mi
+  min_cpu: 100m
+  max_cpu: 200m
+
+## For scale-up/down operation, define the number of replicas of the app.
+## We recommend for the minimum to be 2 or more, unless there is a specific need for a single replica.
+## For instance, the cron scheduler app needs to have a single replica because of its nature.
+## Cluster infrastructure scaling depends on highly available workloads for its operations
+  min_replicas: 2
+  max_replicas: 2
+
+## For horizontal scale-up e scale-down operations, define the % to trigger it
+  cpu_percentage_trigger: 80
+  ram_percentage_trigger: 80
+
+
+## ----- Deployment ------
+## For rollout definitions, rolloutSurge adds a fraction of existing pods in the process of releasing a new verion
+## For instance, a rolloutSurge of 50% and 4 running pods, a new deploy adds 2 pods, when they are ready, we delete 2 from the old deployment, and so on
+deployment:
+  rolloutSurge: 50%
+
+## How many pods it's acceptable (or % of pods) to be unavailable in the rollout operation
+## For instance, a rolloutUnavailable of 50% e 4 pods, a new deployment will start deleting 2 pods at the same time of adding new pods
+## from the rolloutSurge
+# rolloutUnavailable: 20%
+  rolloutUnavailable: 0
+
+## Define the route to expose your app in API Gateway
+## Example:
+## route: myappname
+##
+## This configuration means that the requests to the <api_gateway>/<route> will
+## be routed to this app. Must be globally unique accross all microservices.
+## Set it to false if you don't need to expose the service to the API Gateway
+api_gateway:
+  expose: false
+  hostname: "api.env.nursa.com"
+  route: /myappname
+  health_endpoint: /health
+
+## Define URL redirects. Example:
+## /api: /api/v1
+## the example above redirects requests com from /api/** to /api/v1/**
+##
+## Leave it blank if there are no redirects
+  redirects:
+
+
+# Define  migration configs, to be serem run before the deployment
+migration:
+  enabled: false
+  command:
+    - sleep
+    - 30
+
+
+## Creates the health checks configs:
+## Startup probes: recognizes that the app has started, and starts the next probes
+## Readiness probes: recognizes if the pod is ready to receive requests. If not, no packets are sent to the pod
+## Liveness probes: recognizes if the pod is healthy. If not, the pod is stopped with a SIGTERM signal and after 30s a SIGKILL signal
+##
+## They will all use the same "probe test", but with different frequency and tolerance
+## Refe
+##
+## Examples
+# probeConfig:
+#   exec:
+#     command:
+#       - node
+#       - scripts/health.js
+#
+# probeConfig:
+#   tcpSocket:
+#     port: 1234
+#
+# probeConfig:
+#   httpGet:
+#     path: /health
+#     port: 5000
+#
+#
+# startupProbe:
+#   periodSeconds: 10
+#   timeoutSeconds: 5
+#   failureThreshold: 5
+# livenessProbe:
+#   periodSeconds: 10
+#   timeoutSeconds: 5
+#   failureThreshold: 5
+# readinessProbe:
+#   periodSeconds: 10
+#   timeoutSeconds: 5
+#   failureThreshold: 5
+##
+## periodSeconds: Frequency of the probe. Example, every 10s
+## timeoutSeconds: How long we wait for a response before considering the probe as failed. Example: timeout of 5s
+## failureThreshold: after how many failures we consider the state as unhealthy.
+## For instance, after 3 failures of the liveness probe, we restart the app, but only after 1 failure we stop sending traffic with the readiness probe
+## Ref/ https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+
+## Fill the config below with your probes as described above
+probeConfig:
+startupProbe:
+livenessProbe:
+readinessProbe:
+
+# Define the command of an init container, it has the same image of the pod
+# Ref https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+init_container:
+  enabled: false
+  command:
+    - sleep
+    - 10

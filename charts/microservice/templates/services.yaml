@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "appname" . }}
+{{- include "all.labels" . | indent 2 }}
+    app: {{ include "appname" . }}
+spec:
+  selector:
+    app: {{ include "appname" . }}
+  ports:
+{{- if .Values.service.internalPort }}
+  - name: {{ include "appname" . }}-port
+    protocol: TCP
+    port: {{ .Values.service.internalPort }}
+    targetPort: {{ .Values.service.internalPort }}
+{{- end }}
+{{- if eq .Values.debug.enabled true }}
+  - name: {{ include "appname" . }}-debug-port
+    protocol: TCP
+    port: {{ .Values.debug.port }}
+    targetPort: {{ .Values.debug.port }}
+{{- end }}
+
+---
+
+{{- if and (eq .Values.api_gateway.expose true) (ne .Values.api_gateway.health_endpoint nil) }}
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: {{ include "appname" . }}-healthcheck
+spec:
+  default:
+    checkIntervalSec: 10
+    timeoutSec: 2
+    healthyThreshold: 2
+    unhealthyThreshold: 1
+    logConfig:
+      enabled: true
+    config:
+      type: HTTP
+      httpHealthCheck:
+        portSpecification: USE_FIXED_PORT
+        port: {{ .Values.service.internalPort }}
+        host: "gcp-lb-health-check"
+        requestPath: {{ .Values.api_gateway.health_endpoint }}
+  targetRef:
+    group: ""
+    kind: Service
+    name: {{ include "appname" . }}
+{{- end }}
