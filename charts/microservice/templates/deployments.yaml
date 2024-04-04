@@ -30,7 +30,9 @@ spec:
         - name: {{ .Release.Name }}
           image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
+        {{- if or .Values.service.internalPort (and (eq .Values.debug.enabled true) .Values.debug.port) }}
           ports:
+        {{- end }}
         {{- if .Values.service.internalPort }}
           - containerPort: {{ .Values.service.internalPort }}
         {{- end }}
