@@ -7,7 +7,7 @@ metadata:
 spec:
   parentRefs:
     - kind: Gateway
-      name: api-gateway-foundation
+      name: {{ .Values.api_gateway.api_gateway_name }}
   hostnames:
     - {{ .Values.api_gateway.hostname}}
   rules:

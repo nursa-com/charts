@@ -87,13 +87,14 @@ deployment:
 ## Example:
 ## route: myappname
 ##
-## This configuration means that the requests to the <api_gateway>/<route> will
+## This configuration means that the requests to the <api_gateway.hostname>/<route> will
 ## be routed to this app. Must be globally unique accross all microservices.
 ## Set it to false if you don't need to expose the service to the API Gateway
 api_gateway:
+  api_gateway_name: api-gateway-name
   expose: false
-  hostname: "api.env.nursa.com"
-  route: /myappname
+  hostname: "backend.env.nursa.com"
+  route: /app
   health_endpoint: /health
 
 ## Define URL redirects. Example:
