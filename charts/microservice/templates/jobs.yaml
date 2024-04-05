@@ -14,7 +14,7 @@ spec:
       {{- include "migration.annotations" . | indent 6 }}
     spec:
       restartPolicy: Never
-      serviceAccountName: {{ .Values.serviceAccount }}
+      serviceAccountName: {{ default (include "appname" .) .Values.serviceAccount }}
       nodeSelector:
         iam.gke.io/gke-metadata-server-enabled: "true"
       containers:
