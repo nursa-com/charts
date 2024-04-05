@@ -17,7 +17,8 @@ labels:
   chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
   release: {{ include "appname" . }}
   env: {{ .Values.global.env }}
-  version: {{ default .Values.global.app_version "1.0.0" }}
+  version: {{ default .Values.global.appVersion "1.0.0" -}}
+  {{- .Values.global.additionalLabels | toYaml | nindent 2 }}
 {{- end }}
 
 {{- define "all.labels" }}

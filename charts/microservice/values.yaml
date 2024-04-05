@@ -1,8 +1,9 @@
 global:
   project_id: "project_id"
   env: "env"
-  app_version: "1.0.0"
+  appVersion: "1.0.0"
   overrideName: ""
+  additionalLabels: {}
 
 ## Define Environment Variables. Example:
 ## ENV: dev
