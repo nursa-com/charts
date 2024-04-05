@@ -23,7 +23,7 @@ spec:
         app: {{ .Release.Name }}
         {{- include "common.annotations" . | indent 6 }}
     spec:
-      serviceAccountName: {{ .Values.serviceAccount }}
+      serviceAccountName: {{ default (include "appname" .) .Values.serviceAccount }}
       nodeSelector:
         iam.gke.io/gke-metadata-server-enabled: "true"
       containers:
