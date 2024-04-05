@@ -14,8 +14,8 @@ parameters: {}
 ## image: gcr.io/nursa-prod/microservice
 ## image_tag: v1.2.3
 ## imagePullPolicy: Always
-image: ubuntu
-image_tag: latest
+image: nginx
+image_tag: bullseye
 imagePullPolicy: Always
 
 ## Start the app in debug mode, overriding the entrypoint command
@@ -48,7 +48,7 @@ service:
 ## Ensure for it not to be 0 if you set expose = true
 ## Example:
 ## internalPort: 5000
-  internalPort:
+  internalPort: 0
 
 # ----- Autoscaling ------
 ## Define resource limits, for min and max of memory/CPU. This is related to vertical scaling.

@@ -50,5 +50,5 @@ annotations:
   iam.gke.io/gcp-service-account: {{ printf "%s@%s.iam.gserviceaccount.com" .Values.serviceAccount .Values.global.project_id | quote }}
   helm.sh/hook: pre-install
   helm.sh/hook-weight: "0"
-  helm.sh/hook-delete-policy: hook-failed
+  helm.sh/hook-delete-policy: hook-failed,before-hook-creation
 {{- end }}

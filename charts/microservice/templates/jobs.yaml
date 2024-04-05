@@ -21,10 +21,10 @@ spec:
         - name: {{ include "appname" . }}
           image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
+        {{- if or .Values.service.internalPort (and (eq .Values.debug.enabled true) .Values.debug.port) }}
           ports:
-        {{- if .Values.service.internalPort }}
-          - containerPort: {{ .Values.service.internalPort }}
         {{- end }}
+          - containerPort: {{ .Values.service.internalPort }}
         {{- if eq .Values.debug.enabled true }}
           - containerPort: {{ .Values.debug.port }}
         {{- end }}
