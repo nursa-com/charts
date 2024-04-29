@@ -18,7 +18,9 @@ labels:
   release: {{ include "appname" . }}
   env: {{ .Values.global.env }}
   version: {{ default .Values.global.appVersion "1.0.0" -}}
+  {{- if .Values.global.additionalLabels }}
   {{- .Values.global.additionalLabels | toYaml | nindent 2 }}
+  {{- end }}
 {{- end }}
 
 {{- define "all.labels" }}
