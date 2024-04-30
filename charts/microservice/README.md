@@ -63,7 +63,7 @@ dependencies:
 ### Customize your implementation
 To customize your implementation, you should update the values as described in the `values.yaml` file. If you are using this chart as a dependency, you can create a new values file in the parent chart, and customize the behavior of this chart like the following example:
 
-```parent-chart-values.yaml
+```
 microservice:
   parameters: {}
   image: my-custom-image
