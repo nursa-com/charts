@@ -90,9 +90,11 @@ deployment:
 ##
 ## This configuration means that the requests to the <api_gateway.hostname>/<route> will
 ## be routed to this app. Must be globally unique accross all microservices.
+## You need to point the existing API Gateway to add this route, with the name and the namespace where it lives
 ## Set it to false if you don't need to expose the service to the API Gateway
 api_gateway:
   api_gateway_name: api-gateway-name
+  namespace:
   expose: false
   hostname: "backend.env.nursa.com"
   route: /app

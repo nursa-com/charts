@@ -8,6 +8,7 @@ spec:
   parentRefs:
     - kind: Gateway
       name: {{ .Values.api_gateway.api_gateway_name }}
+      namespace: {{ default .Release.Namespace .Values.api_gateway.namespace }}
   hostnames:
     - {{ .Values.api_gateway.hostname}}
   rules:
