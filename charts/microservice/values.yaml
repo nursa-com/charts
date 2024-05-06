@@ -8,9 +8,13 @@ global:
 ## Define Environment Variables. Example:
 ## ENV: dev
 parameters: {}
-secrets:
-  - hello_world
 
+## Add secrets from a list that will be mounted as environment variables.
+## The serviceAccount defined must have permissions to access this secret, check the terraform module service_accounts in `microservices` repo
+## secrets:
+##   - secretA
+##   - secretB
+secrets: []
 
 ## Define app image information
 ## Example:
