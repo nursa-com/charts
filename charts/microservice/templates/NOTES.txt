@@ -28,5 +28,5 @@ Your microservice logs are found here:
 
 https://us5.datadoghq.com/logs?query=env%3A{{.Values.global.env}}%20kube_namespace%3A{{.Release.Namespace}}%20service%3A{{.Release.Name}}&cols=kube_namespace%2Cservice&fromUser=true&index=%2A&messageDisplay=inline&refresh_mode=sliding&saved-view-id=3413&storage=hot&stream_sort=desc
 
-☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸
-                                        by dev-enablement
+☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸
+by dev-enablement

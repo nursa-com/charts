@@ -64,12 +64,25 @@ spec:
             {{- end }}
         {{- end }}
           env:
-          - name: APP
-            value: {{ .Release.Name }}
-        {{- range $key,$value:= .Values.parameters }}
-          - name: {{ upper $key | replace "-" "_" }}
-            value: {{ $value | quote }}
-        {{- end }}
+            - name: APP
+              value: {{ .Release.Name }}
+
+            #Range below is for environment variables
+            {{- range $key,$value:= .Values.parameters }}
+            - name: {{ upper $key | replace "-" "_" }}
+              value: {{ $value | quote }}
+            {{- end }}
+
+            #Range below is for secrets
+            {{- range $secret := .Values.secrets }}
+            - name: {{ upper $secret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret | replace "_" "-" }}
+                  key: value
+                  optional: false
+            {{- end }}
+
           volumeMounts:
             - name: gcp-secret-store-vol
               mountPath: "/var/secrets-store"
@@ -83,12 +96,24 @@ spec:
             - {{$arg | quote}}
             {{- end }}
           env:
-          - name: APP
-            value: {{ .Release.Name }}
-        {{- range $key,$value:= .Values.parameters }}
-          - name: {{ upper $key | replace "-" "_" }}
-            value: {{ $value | quote }}
-        {{- end }}
+            - name: APP
+              value: {{ .Release.Name }}
+
+            #Range below is for environment variables
+            {{- range $key,$value:= .Values.parameters }}
+            - name: {{ upper $key | replace "-" "_" }}
+              value: {{ $value | quote }}
+            {{- end }}
+
+            #Range below is for secrets
+            {{- range $secret := .Values.secrets }}
+            - name: {{ upper $secret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret | replace "_" "-" }}
+                  key: value
+                  optional: false
+            {{- end }}
           volumeMounts:
             - name: gcp-secret-store-vol
               mountPath: "/var/secrets-store"
