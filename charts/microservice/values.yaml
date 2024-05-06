@@ -8,6 +8,8 @@ global:
 ## Define Environment Variables. Example:
 ## ENV: dev
 parameters: {}
+secrets:
+  - hello_world
 
 
 ## Define app image information
@@ -106,15 +108,6 @@ api_gateway:
 ##
 ## Leave it blank if there are no redirects
   redirects:
-
-
-# Define  migration configs, to be serem run before the deployment
-migration:
-  enabled: false
-  command:
-    - sleep
-    - 30
-
 
 ## Creates the health checks configs:
 ## Startup probes: recognizes that the app has started, and starts the next probes

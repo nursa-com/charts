@@ -64,10 +64,15 @@ spec:
             {{- end }}
         {{- end }}
           env:
+          - name: APP
+            value: {{ .Release.Name }}
         {{- range $key,$value:= .Values.parameters }}
           - name: {{ upper $key | replace "-" "_" }}
             value: {{ $value | quote }}
         {{- end }}
+          volumeMounts:
+            - name: gcp-secret-store-vol
+              mountPath: "/var/secrets-store"
     {{- if eq .Values.init_container.enabled true }}
       initContainers:
         - name: {{ .Release.Name }}-db-migrator
@@ -84,4 +89,14 @@ spec:
           - name: {{ upper $key | replace "-" "_" }}
             value: {{ $value | quote }}
         {{- end }}
+          volumeMounts:
+            - name: gcp-secret-store-vol
+              mountPath: "/var/secrets-store"
     {{- end }}
+      volumes:
+        - name: gcp-secret-store-vol
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ printf "gcp-secrets-%s" (include "appname" .)}}

@@ -1,17 +1,3 @@
-
-
-
-☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸
-
-    ☸☸    ☸☸    ☸☸☸☸☸☸☸☸    ☸☸         ☸☸☸     ☸☸☸
-    ☸☸    ☸☸    ☸☸          ☸☸         ☸☸ ☸☸ ☸☸ ☸☸
-    ☸☸☸☸☸☸☸☸    ☸☸☸☸☸☸      ☸☸         ☸☸  ☸☸☸  ☸☸
-    ☸☸    ☸☸    ☸☸          ☸☸         ☸☸       ☸☸
-    ☸☸    ☸☸    ☸☸☸☸☸☸☸☸    ☸☸☸☸☸☸☸    ☸☸       ☸☸
-
-☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸
-                                        by dev-enablement
-
 😀 Thanks 😀 You just installed the: {{ .Chart.Name }}.
 
 This deployment can be --atomic if you use the flag --atomic ⚛
@@ -33,6 +19,7 @@ Release:
     🔅 Multidimensional Pod Autoscaler (MPA)
     🔅 HTTP Route to the API Gateway if you set expose = true
     🔅 Load Balancer Health Check, if defined
+    🔅 Secret Provider: if you set secrets in the values file, it will be mounted as Environment Variable
 
 🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍
 EXPLORE!
@@ -40,3 +27,6 @@ EXPLORE!
 Your microservice logs are found here:
 
 https://us5.datadoghq.com/logs?query=env%3A{{.Values.global.env}}%20kube_namespace%3A{{.Release.Namespace}}%20service%3A{{.Release.Name}}&cols=kube_namespace%2Cservice&fromUser=true&index=%2A&messageDisplay=inline&refresh_mode=sliding&saved-view-id=3413&storage=hot&stream_sort=desc
+
+☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸☸
+                                        by dev-enablement
