@@ -7,7 +7,7 @@ metadata:
 spec:
   parentRefs:
     - kind: Gateway
-      name: {{ .Values.api_gateway.api_gateway_name }}
+      name: {{ tpl (.Values.api_gateway.api_gateway_name | toString) . | quote }}
       namespace: {{ default .Release.Namespace .Values.api_gateway.namespace }}
   hostnames:
     - {{ .Values.api_gateway.hostname}}
