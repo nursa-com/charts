@@ -8,9 +8,9 @@ spec:
   parentRefs:
     - kind: Gateway
       name: {{ tpl (.Values.api_gateway.api_gateway_name | toString) . | quote }}
-      namespace: {{ default .Release.Namespace .Values.api_gateway.namespace }}
+      namespace: {{ default .Release.Namespace (tpl (.Values.api_gateway.namespace | toString) . | quote) }}
   hostnames:
-    - {{ .Values.api_gateway.hostname}}
+    - {{ tpl (.Values.api_gateway.hostname | toString) . | quote }}
   rules:
     - matches:
       - path:
@@ -18,7 +18,7 @@ spec:
         {{- if eq .Values.route "" }}
           value: {{ printf "/%" .Release.Name }}
         {{- else }}
-          value: {{ printf "%s" .Values.api_gateway.route }}
+          value: {{ printf "%s" (tpl (.Values.api_gateway.route | toString) . | quote) }}
         {{- end }}
       filters:
       - type: URLRewrite
