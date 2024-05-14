@@ -66,6 +66,8 @@ spec:
           env:
             - name: APP
               value: {{ .Release.Name }}
+            - name: ENV
+              value: {{ .Values.global.env }}
 
             #Range below is for environment variables
             {{- range $key,$value:= .Values.parameters }}
@@ -98,6 +100,8 @@ spec:
           env:
             - name: APP
               value: {{ .Release.Name }}
+            - name: ENV
+              value: {{ .Values.global.env }}
 
             #Range below is for environment variables
             {{- range $key,$value:= .Values.parameters }}
