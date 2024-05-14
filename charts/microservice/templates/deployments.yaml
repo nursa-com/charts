@@ -70,7 +70,7 @@ spec:
             #Range below is for environment variables
             {{- range $key,$value:= .Values.parameters }}
             - name: {{ upper $key | replace "-" "_" }}
-              value: {{ $value | quote }}
+              value: {{ tpl ($value | toString) $ | quote }}
             {{- end }}
 
             #Range below is for secrets
@@ -102,7 +102,7 @@ spec:
             #Range below is for environment variables
             {{- range $key,$value:= .Values.parameters }}
             - name: {{ upper $key | replace "-" "_" }}
-              value: {{ $value | quote }}
+              value: {{ tpl ($value | toString) $ | quote }}
             {{- end }}
 
             #Range below is for secrets

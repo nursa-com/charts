@@ -25,7 +25,7 @@ spec:
 
 ---
 
-{{- if and (eq .Values.api_gateway.expose true) (ne .Values.api_gateway.health_endpoint nil) }}
+{{- if .Values.api_gateway.expose }}
 apiVersion: networking.gke.io/v1
 kind: HealthCheckPolicy
 metadata:
