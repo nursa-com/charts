@@ -1,0 +1,57 @@
+{{- if .Values.migration.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-migrator
+  namespace: {{ .Release.Namespace }}
+{{- include "migration.labels" . | indent 2 }}
+{{- include "migration.annotations" . | indent 2 }}
+spec:
+  template:
+    metadata:
+      name: "{{ .Release.Name }}"
+      namespace: {{ .Release.Namespace }}
+{{- include "migration.labels" . | indent 6 }}
+{{- include "migration.annotations" . | indent 6 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ index .Values.serviceAccount }}
+      nodeSelector:
+        iam.gke.io/gke-metadata-server-enabled: "true"
+      containers:
+      - name: {{ .Release.Name }}-migrator
+        image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        command: {{ .Values.migration.command }}
+        env:
+          - name: APP
+            value: {{ .Release.Name }}
+          - name: ENV
+            value: {{ .Values.global.env }}
+
+          #Range below is for environment variables
+          {{- range $key,$value:= .Values.parameters }}
+          - name: {{ upper $key | replace "-" "_" }}
+            value: {{ tpl ($value | toString) $ | quote }}
+          {{- end }}
+
+          #Range below is for secrets
+          {{- range $secret := .Values.secrets }}
+          - name: {{ upper $secret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ $secret | replace "_" "-" }}
+                key: value
+                optional: false
+          {{- end }}
+        volumeMounts:
+          - name: gcp-secret-store-vol
+            mountPath: "/var/secrets-store"
+      volumes:
+        - name: gcp-secret-store-vol
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ printf "gcp-secrets-%s" (include "appname" .)}}
+{{- end }}

@@ -25,6 +25,10 @@ image: nginx
 image_tag: bullseye
 imagePullPolicy: Always
 
+migration:
+  enabled: true
+  command: sleep 10
+
 ## Start the app in debug mode, overriding the entrypoint command
 ## Change this accordingly to your needs.
 ## The configuration below is disabled, but sleep infinity is a good debug command
