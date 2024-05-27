@@ -1,4 +1,4 @@
-{{- if eq .Values.api_gateway.expose true }}
+{{- if and (eq .Values.api_gateway.expose true) (ne .Values.migration.run_only_migration true) }}
 kind: HTTPRoute
 apiVersion: gateway.networking.k8s.io/v1beta1
 metadata:

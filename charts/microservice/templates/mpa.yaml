@@ -1,3 +1,4 @@
+{{- if ne .Values.migration.run_only_migration true }}
 apiVersion: autoscaling.gke.io/v1beta1
 kind: MultidimPodAutoscaler
 metadata:
@@ -31,3 +32,4 @@ spec:
           memory: {{ .Values.autoscaling.max_memory }}
   policy:
     updateMode: Auto
+{{- end }}

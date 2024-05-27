@@ -1,4 +1,4 @@
-{{- if or .Values.service.internalPort (and (eq .Values.debug.enabled true) .Values.debug.port) }}
+{{- if and (or .Values.service.internalPort (and (eq .Values.debug.enabled true) .Values.debug.port)) (ne .Values.migration.run_only_migration true) }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -25,7 +25,7 @@ spec:
 
 ---
 
-{{- if .Values.api_gateway.expose }}
+{{- if and (.Values.api_gateway.expose) (ne .Values.migration.run_only_migration true) }}
 apiVersion: networking.gke.io/v1
 kind: HealthCheckPolicy
 metadata:

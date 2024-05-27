@@ -8,8 +8,8 @@ happens automatically if the deployment is not successful.
 ❗❗❗❗❗ INFO ❗❗❗❗❗
 This chart has the following components:
 
-Migration:
-    🔅 A job that will run a migration if you set migration.enabled in the values
+Migration Job :
+    🔅 A job that will run a only the app migration if you set `run_only_migration: true` in the values
 
 Release:
     🔅 Service Account: {{ include "appname" . }}

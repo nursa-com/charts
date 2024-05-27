@@ -1,4 +1,4 @@
-
+{{- if ne .Values.migration.run_only_migration true }}
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -8,3 +8,4 @@ spec:
   selector:
     matchLabels:
       app: {{ include "appname" . }}
+{{- end }}

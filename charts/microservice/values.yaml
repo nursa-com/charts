@@ -1,7 +1,7 @@
 global:
-  project_id: "project_id"
-  env: "env"
-  appVersion: "1.0.0"
+  project_id: project_id
+  env: env
+  appVersion: 1.0.0
   overrideName: ""
   additionalLabels: {}
 
@@ -25,6 +25,14 @@ image: nginx
 image_tag: bullseye
 imagePullPolicy: Always
 
+
+migration:
+  run_only_migration: false
+  command:
+    - sleep
+    - 10
+
+
 ## Start the app in debug mode, overriding the entrypoint command
 ## Change this accordingly to your needs.
 ## The configuration below is disabled, but sleep infinity is a good debug command
@@ -43,7 +51,7 @@ debug:
 ## For the Workload Identity Federation to work, the service account needs to have a binding in place from google side.
 ## Example:
 ## serviceAccount: microservice-sa
-serviceAccount: default
+serviceAccount: default-sa
 
 ## Type of Kubernetes service to connect to the app. ClusterIP is the default, but all others are supported.
 ## Check https://kubernetes.io/docs/concepts/services-networking/service/
@@ -55,7 +63,7 @@ service:
 ## Ensure for it not to be 0 if you set expose = true
 ## Example:
 ## internalPort: 5000
-  internalPort: 0
+  internalPort: 5000
 
 # ----- Autoscaling ------
 ## Define resource limits, for min and max of memory/CPU. This is related to vertical scaling.
