@@ -43,7 +43,7 @@ debug:
 ## For the Workload Identity Federation to work, the service account needs to have a binding in place from google side.
 ## Example:
 ## serviceAccount: microservice-sa
-serviceAccount: default
+serviceAccount: default-sa
 
 ## Type of Kubernetes service to connect to the app. ClusterIP is the default, but all others are supported.
 ## Check https://kubernetes.io/docs/concepts/services-networking/service/

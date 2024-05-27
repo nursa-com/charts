@@ -90,7 +90,7 @@ spec:
               mountPath: "/var/secrets-store"
     {{- if eq .Values.init_container.enabled true }}
       initContainers:
-        - name: {{ .Release.Name }}-db-migrator
+        - name: {{ .Release.Name }}-init-script
           image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           command:
