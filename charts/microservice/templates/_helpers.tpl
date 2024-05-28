@@ -6,7 +6,6 @@
 {{- .Release.Name }}
 {{- end }}
 {{- end }}
-#TODO review approach of appname
 
 #-------------------------------------------------------------------------------
 #---- DEFINING LABELS                                                      ----
@@ -52,9 +51,9 @@ annotations:
 
 {{- define "migration.annotations" }}
 annotations:
-  helm.sh/hook: pre-install,pre-upgrade
+  helm.sh/hook: pre-upgrade
   helm.sh/hook-weight: "1"
-  helm.sh/hook-delete-policy: hook-succeeded,hook-failed
+  helm.sh/hook-delete-policy: hook-succeeded,before-hook-creation
 {{- end }}
 
 {{- define "sa.annotations" }}

@@ -1,6 +1,6 @@
 global:
-  project_id: "project_id"
-  env: "env"
+  project_id: project_id
+  env: env
   appVersion: "1.0.0"
   overrideName: ""
   additionalLabels: {}
@@ -26,8 +26,8 @@ image_tag: bullseye
 imagePullPolicy: Always
 
 migration:
-  enabled: true
-  command: sleep 10
+  enabled: false
+  command: ["sleep", "10"]
 
 ## Start the app in debug mode, overriding the entrypoint command
 ## Change this accordingly to your needs.
