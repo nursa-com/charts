@@ -22,13 +22,17 @@ labels:
   {{- end }}
 {{- end }}
 
-{{- define "all.labels" }}
+{{- define "app.labels" }}
 {{- include "common.labels" . }}
+  tags.datadoghq.com/service: {{ include "appname" . }}
+  tags.datadoghq.com/version: {{ default .Values.global.appVersion "1.0.0" -}}
 {{- end }}
 
 {{- define "migration.labels" }}
 {{- include "common.labels" . }}
-  app: {{ printf "%s-migration" .Release.Name }}
+  app: {{ printf "%s-migrator" .Release.Name }}
+  tags.datadoghq.com/service: {{ printf "%s-migrator" (include "appname" .) }}
+  tags.datadoghq.com/version: {{ default .Values.global.appVersion "1.0.0" -}}
 {{- end }}
 
 #-------------------------------------------------------------------------------
@@ -51,6 +55,16 @@ annotations:
 
 {{- define "migration.annotations" }}
 annotations:
+  timestamp: {{ now | unixEpoch | quote }}
+  {{ printf "ad.datadoghq.com/%s-migrator.logs" (include "appname" .) }}: |-
+    [{
+      "source":"nestjs",
+      "log_processing_rules": [{
+      "type":"multi_line",
+      "name": "nest_start_line",
+      "pattern": "\\[Nest\\]"
+      }]
+    }]
   helm.sh/hook: pre-upgrade
   helm.sh/hook-weight: "1"
   helm.sh/hook-delete-policy: hook-succeeded,before-hook-creation

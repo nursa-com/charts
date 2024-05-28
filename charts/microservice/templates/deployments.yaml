@@ -5,7 +5,7 @@ kind: Deployment
 metadata:
   name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
-  {{- include "all.labels" . | indent 2 }}
+  {{- include "app.labels" . | indent 2 }}
   {{- include "common.annotations" . | indent 2 }}
 spec:
   strategy:
@@ -19,7 +19,7 @@ spec:
   replicas: {{ .Values.autoscaling.min_replicas }}
   template:
     metadata:
-        {{- include "all.labels" . | indent 6 }}
+        {{- include "app.labels" . | indent 6 }}
         app: {{ .Release.Name }}
         {{- include "common.annotations" . | indent 6 }}
     spec:
