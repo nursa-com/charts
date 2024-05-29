@@ -58,10 +58,8 @@ spec:
               cpu: {{ .Values.autoscaling.max_cpu }}
         {{- end }}
         {{- if eq .Values.debug.enabled true }}
-          command:
-            {{ range $arg:= .Values.debug.command }}
-            - {{$arg | quote}}
-            {{- end }}
+          command: {{ mustRegexSplit " +" .Values.debug.command -1 | toJson }}
+
         {{- end }}
           env:
             - name: APP

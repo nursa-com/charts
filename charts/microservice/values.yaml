@@ -27,7 +27,7 @@ imagePullPolicy: Always
 
 migration:
   enabled: false
-  command: ["sleep", "10"]
+  command: sleep 10
 
 ## Start the app in debug mode, overriding the entrypoint command
 ## Change this accordingly to your needs.
@@ -36,9 +36,7 @@ migration:
 ## You can expose an additional port if you need other commands or more powerful debug options, such as attaching a debugger
 debug:
   enabled: false
-  command:
-    - sleep
-    - infinity
+  command: sleep infinity
   port: 10000
 
 ## Service Account name for the app. The service account is required for every app.
