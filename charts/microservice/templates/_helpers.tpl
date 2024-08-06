@@ -65,7 +65,6 @@ annotations:
 annotations:
   helm.sh/hook: pre-upgrade
   helm.sh/hook-weight: "0"
-  helm.sh/hook-delete-policy: hook-failed,before-hook-creation
 {{- end }}
 
 {{- define "migration.annotations" }}
