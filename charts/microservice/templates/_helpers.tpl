@@ -63,7 +63,7 @@ annotations:
 
 {{- define "secrets.annotations" }}
 annotations:
-  helm.sh/hook: pre-upgrade
+  helm.sh/hook: pre-install,pre-upgrade
   helm.sh/hook-weight: "0"
   helm.sh/hook-delete-policy: before-hook-creation
 {{- end }}
