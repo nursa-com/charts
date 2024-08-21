@@ -21,7 +21,11 @@ spec:
         iam.gke.io/gke-metadata-server-enabled: "true"
       containers:
       - name: {{ .Release.Name }}-migrator
-        image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
+        {{- if .Values.migration.image }}
+          image: {{ printf "%s:%s" .Values.migration.image .Values.image_tag }}
+        {{- else }}
+          image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
+        {{- end }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         command: {{ mustRegexSplit " +" .Values.migration.command -1 | toJson }}
         env:
