@@ -26,6 +26,7 @@ spec:
       serviceAccountName: {{ default (include "appname" .) .Values.serviceAccount }}
       nodeSelector:
         iam.gke.io/gke-metadata-server-enabled: "true"
+        cloud.google.com/gke-nodepool: {{ printf "nodepool1-%s" .Values.global.env }}
       containers:
         - name: {{ .Release.Name }}
           image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
