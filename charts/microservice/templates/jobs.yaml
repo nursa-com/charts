@@ -19,7 +19,9 @@ spec:
       serviceAccountName: {{ index .Values.serviceAccount }}
       nodeSelector:
         iam.gke.io/gke-metadata-server-enabled: "true"
-        cloud.google.com/gke-nodepool: {{ printf "nodepool1-%s" .Values.global.env }}
+        {{- range $key,$value:= index .Values "job" "nodeSelector" }}
+        {{ $key }}: {{ tpl ($value | toString) $ | quote }}
+        {{- end }}
       containers:
       - name: {{ .Release.Name }}-migrator
         {{- if .Values.migration.image }}
