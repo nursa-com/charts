@@ -85,12 +85,16 @@ autoscaling:
 ## For instance, a rolloutSurge of 50% and 4 running pods, a new deploy adds 2 pods, when they are ready, we delete 2 from the old deployment, and so on
 deployment:
   rolloutSurge: 50%
+  nodeSelector: {}
 
 ## How many pods it's acceptable (or % of pods) to be unavailable in the rollout operation
 ## For instance, a rolloutUnavailable of 50% e 4 pods, a new deployment will start deleting 2 pods at the same time of adding new pods
 ## from the rolloutSurge
 # rolloutUnavailable: 20%
   rolloutUnavailable: 0
+
+job:
+  nodeSelector: {}
 
 ## Define the route to expose your app in API Gateway
 ## Example:

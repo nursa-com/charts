@@ -26,6 +26,9 @@ spec:
       serviceAccountName: {{ default (include "appname" .) .Values.serviceAccount }}
       nodeSelector:
         iam.gke.io/gke-metadata-server-enabled: "true"
+        {{- range $key,$value:= index .Values "deployment" "nodeSelector" }}
+        {{ $key }}: {{ tpl ($value | toString) $ | quote }}
+        {{- end }}
       containers:
         - name: {{ .Release.Name }}
           image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
