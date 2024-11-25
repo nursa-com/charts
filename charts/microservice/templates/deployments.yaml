@@ -57,8 +57,10 @@ spec:
           resources:
             requests:
               cpu: {{ .Values.autoscaling.min_cpu }}
+              memory: {{ .Values.autoscaling.min_memory }}
             limits:
               cpu: {{ .Values.autoscaling.max_cpu }}
+              memory: {{ .Values.autoscaling.max_memory }}
         {{- end }}
         {{- if eq .Values.debug.enabled true }}
           command: {{ mustRegexSplit " +" .Values.debug.command -1 | toJson }}
