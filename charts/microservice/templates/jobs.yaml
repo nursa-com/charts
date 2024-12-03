@@ -19,6 +19,9 @@ spec:
       serviceAccountName: {{ index .Values.serviceAccount }}
       nodeSelector:
         iam.gke.io/gke-metadata-server-enabled: "true"
+        {{- range $key,$value:= index .Values "job" "nodeSelector" }}
+        {{ $key }}: {{ tpl ($value | toString) $ | quote }}
+        {{- end }}
       containers:
       - name: {{ .Release.Name }}-migrator
         {{- if .Values.migration.image }}
