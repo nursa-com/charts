@@ -25,7 +25,7 @@ spec:
         urlRewrite:
           path:
             type: ReplacePrefixMatch
-            replacePrefixMatch: /
+            replacePrefixMatch: {{ default (printf "/") .Values.api_gateway.replacePrefixMatch }}
       backendRefs:
       - name: {{ include "appname" . }}
         port: {{  $.Values.service.internalPort }}
