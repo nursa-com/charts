@@ -16,7 +16,7 @@ labels:
   chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
   release: {{ include "appname" . }}
   env: {{ .Values.global.env }}
-  version: {{ default .Values.global.appVersion "1.0.0" -}}
+  version: {{ .Values.global.appVersion }}
   {{- if .Values.global.additionalLabels }}
   {{- .Values.global.additionalLabels | toYaml | nindent 2 }}
   {{- end }}
@@ -25,14 +25,14 @@ labels:
 {{- define "app.labels" }}
 {{- include "common.labels" . }}
   tags.datadoghq.com/service: {{ include "appname" . }}
-  tags.datadoghq.com/version: {{ default .Values.global.appVersion "1.0.0" -}}
+  tags.datadoghq.com/version: {{ .Values.global.appVersion }}
 {{- end }}
 
 {{- define "migration.labels" }}
 {{- include "common.labels" . }}
   app: {{ printf "%s-migrator" .Release.Name }}
   tags.datadoghq.com/service: {{ printf "%s-migrator" (include "appname" .) }}
-  tags.datadoghq.com/version: {{ default .Values.global.appVersion "1.0.0" -}}
+  tags.datadoghq.com/version: {{ .Values.global.appVersion }}
 {{- end }}
 
 #-------------------------------------------------------------------------------
