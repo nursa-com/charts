@@ -59,7 +59,9 @@ spec:
               cpu: {{ .Values.autoscaling.min_cpu }}
               memory: {{ .Values.autoscaling.min_memory }}
             limits:
+            {{- if .Values.autoscaling.max_cpu }}
               cpu: {{ .Values.autoscaling.max_cpu }}
+            {{- end }}
               memory: {{ .Values.autoscaling.max_memory }}
         {{- end }}
         {{- if eq .Values.debug.enabled true }}
