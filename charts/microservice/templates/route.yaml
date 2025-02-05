@@ -13,31 +13,32 @@ spec:
     - {{ tpl (.Values.api_gateway.hostname | toString) . | quote }}
   rules:
     - matches:
-      - path:
-          type: PathPrefix
-        {{- if eq .Values.route "" }}
-          value: {{ printf "/%" .Release.Name }}
-        {{- else }}
-          value: {{ printf "%s" (tpl (.Values.api_gateway.route | toString) . | quote) }}
-        {{- end }}
+        - path:
+            type: PathPrefix
+          {{- if eq .Values.route "" }}
+            value: {{ printf "/%s" .Release.Name }}
+          {{- else }}
+            value: {{ tpl (.Values.api_gateway.route | toString) . | quote }}
+          {{- end }}
       filters:
-      - type: URLRewrite
-        urlRewrite:
-          path:
-            type: ReplacePrefixMatch
-            replacePrefixMatch: {{ default (printf "/") .Values.api_gateway.replacePrefixMatch }}
-    {{- range $key,$value:= .Values.api_gateway.redirects }}
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: {{ default "/" .Values.api_gateway.replacePrefixMatch }}
       backendRefs:
-      - name: {{ include "appname" $ | quote  }}
-        port: {{  $.Values.service.internalPort }}
-      - matches:
+        - name: {{ include "appname" . | quote }}
+          port: {{ $.Values.service.internalPort }}
+
+    {{- range $key, $value := .Values.api_gateway.redirects }}
+    - matches:
         - path:
             type: PathPrefix
             value: {{ $key }}
-        backendRefs:
+      backendRefs:
         - name: {{ include "appname" $ | quote }}
-          port: {{  $.Values.service.internalPort }}
-        filters:
+          port: {{ $.Values.service.internalPort }}
+      filters:
         - type: URLRewrite
           urlRewrite:
             path:
