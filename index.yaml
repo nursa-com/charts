@@ -2,6 +2,14 @@ apiVersion: v1
 entries:
   microservice:
   - apiVersion: v2
+    created: "2025-02-05T19:14:24.565865357Z"
+    description: Microservice template
+    digest: 0daa4266279cf89d372d4a8255d51d08abfb015cbc3b1cdd4436762c9f223170
+    name: microservice
+    urls:
+    - https://github.com/nursa-com/charts/releases/download/microservice-1.7.26/microservice-1.7.26.tgz
+    version: 1.7.26
+  - apiVersion: v2
     created: "2025-01-29T18:06:00.57504364Z"
     description: Microservice template
     digest: 6dacb8364b29610e439d36b5528a8fb32ec1b338175ea2c972a0222a672d1080
@@ -313,4 +321,4 @@ entries:
     urls:
     - https://github.com/nursa-com/charts/releases/download/microservice-1.0.0/microservice-1.0.0.tgz
     version: 1.0.0
-generated: "2025-01-29T18:06:00.575381562Z"
+generated: "2025-02-05T19:14:24.566176049Z"
