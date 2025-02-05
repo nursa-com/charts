@@ -26,22 +26,22 @@ spec:
           path:
             type: ReplacePrefixMatch
             replacePrefixMatch: {{ default (printf "/") .Values.api_gateway.replacePrefixMatch }}
-      backendRefs:
-      - name: {{ include "appname" . }}
-        port: {{  $.Values.service.internalPort }}
     {{- range $key,$value:= .Values.api_gateway.redirects }}
+      backendRefs:
+      - name: {{ include "appname" $ | quote  }}
+        port: {{  $.Values.service.internalPort }}
       - matches:
         - path:
             type: PathPrefix
             value: {{ $key }}
+        backendRefs:
+        - name: {{ include "appname" $ | quote }}
+          port: {{  $.Values.service.internalPort }}
         filters:
         - type: URLRewrite
           urlRewrite:
             path:
               type: ReplacePrefixMatch
               replacePrefixMatch: {{ $value }}
-        backendRefs:
-        - name: {{ include "appname" $ | quote }}
-          port: {{  $.Values.service.internalPort }}
     {{- end }}
 {{- end }}
