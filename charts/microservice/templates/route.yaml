@@ -41,7 +41,7 @@ spec:
               type: ReplacePrefixMatch
               replacePrefixMatch: {{ $value }}
         backendRefs:
-        - name: {{ include "appname" $ }}
+        - name: {{ include "appname" $ | quote }}
           port: {{  $.Values.service.internalPort }}
     {{- end }}
 {{- end }}
