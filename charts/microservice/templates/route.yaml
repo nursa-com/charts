@@ -28,7 +28,7 @@ spec:
             replacePrefixMatch: {{ default (printf "/") .Values.api_gateway.replacePrefixMatch }}
     {{- range $key,$value:= .Values.api_gateway.redirects }}
       backendRefs:
-      - name: {{ include "appname" % | quote  }}
+      - name: {{ include "appname" $ | quote  }}
         port: {{  $.Values.service.internalPort }}
       - matches:
         - path:
