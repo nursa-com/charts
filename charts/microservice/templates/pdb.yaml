@@ -1,10 +1,9 @@
-
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: {{ printf "pdb-%s" .Release.Name }}
 spec:
-  minAvailable: 1
+  minAvailable: {{ if eq .Release.Namespace "stage0" }}1{{ else }}{{ if (hasKey .Values "pdbMinAvailable") }}{{ .Values.pdbMinAvailable }}{{ else }}1{{ end }}{{ end }}
   selector:
     matchLabels:
       app: {{ include "appname" . }}
