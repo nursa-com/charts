@@ -49,7 +49,8 @@ annotations:
       "type":"multi_line",
       "name": "nest_start_line",
       "pattern": "\\[Nest\\]"
-      }]
+      }],
+      "tags":["pod_ip:%%host%%"]
     }]
 {{- end }}
 
@@ -78,7 +79,8 @@ annotations:
       "type":"multi_line",
       "name": "nest_start_line",
       "pattern": "\\[Nest\\]"
-      }]
+      }],
+      "tags":["pod_ip:%%host%%"]
     }]
   helm.sh/hook: pre-install,pre-upgrade 
   helm.sh/hook-weight: "1"
