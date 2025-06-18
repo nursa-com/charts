@@ -4,6 +4,9 @@ kind: Deployment
 metadata:
   name: {{ .Values.microservice.linked_service.name }}
   namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "0"
   {{- include "app.labels" $ | indent 2 }}
   {{- include "common.annotations" $ | indent 2 }}
 spec:
