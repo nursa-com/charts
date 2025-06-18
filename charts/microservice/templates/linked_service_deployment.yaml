@@ -14,7 +14,7 @@ spec:
   template:
     metadata:
 {{- include "linked_service.labels" $ | indent 6 }}
-      app: {{ .Values.linked_service.name }}
+        app: {{ .Values.linked_service.name }}
 {{- include "linked_service.annotations" $ | indent 6 }}
     spec:
       serviceAccountName: {{ .Values.linked_service.parameters.serviceAccountName }}
