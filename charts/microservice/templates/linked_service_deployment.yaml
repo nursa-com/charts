@@ -1,43 +1,46 @@
-{{- if eq .Values.linked_service.enabled true }}
+{{- if .Values.microservice.linked_service.enabled }}
+{{- range $svc := .Values.microservice.linked_service.services }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.linked_service.name }}
-  namespace: {{ .Release.Namespace }}
+  name: {{ $svc.name }}
+  namespace: {{ $.Release.Namespace }}
   {{- include "app.labels" . | indent 2 }}
   {{- include "common.annotations" . | indent 2 }}
 spec:
   selector:
     matchLabels:
-      app: {{ .Values.linked_service.name }}
-  replicas: {{ .Values.linked_service.replicas }}
+      app: {{ $svc.name }}
+  replicas: {{ $svc.parameters.replicas }}
   template:
     metadata:
         {{- include "app.labels" . | indent 6 }}
-        app: {{ .Values.linked_service.name }}
+        app: {{ $svc.name }}
         {{- include "common.annotations" . | indent 6 }}
     spec:
-      serviceAccountName: {{ .Values.linked_service.name }}
+      serviceAccountName: {{ $svc.parameters.serviceAccountName }}
       containers:
-        - name: {{ .Values.linked_service.name }}
-          image: {{ .Values.linked_service.image }}
+        - name: {{ $svc.name }}
+          image: {{ printf "%s:%s" $svc.parameters.image.repository $svc.parameters.image.tag }}
           ports:
-          - containerPort: {{ .Values.linked_service.port }}
+            {{- range $port := $svc.parameters.ports }}
+            - containerPort: {{ $port.containerPort }}
+            {{- end }}
           resources:
             requests:
-              cpu: {{ .Values.linked_service.autoscaling.min_cpu }}
-              memory: {{ .Values.linked_service.autoscaling.min_memory }}
+              memory: {{ $svc.parameters.resources.min_memory }}
+              cpu: {{ $svc.parameters.resources.min_cpu }}
             limits:
-              cpu: {{ .Values.linked_service.autoscaling.max_cpu }}
-              memory: {{ .Values.linked_service.autoscaling.max_memory }}
+              memory: {{ $svc.parameters.resources.max_memory }}
+              cpu: {{ $svc.parameters.resources.max_cpu }}
             #Range below is for environment variables
-            {{- range $key,$value:= .Values.linked_service.parameters }}
-            - name: {{ upper $key | replace "-" "_" }}
-              value: {{ tpl ($value | toString) $ | quote }}
+            {{- range $key,$value:= $svc.parameters.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
             {{- end }}
             #Range below is for secrets
-            {{- range $secret := .Values.linked_service.secrets }}
-            - name: {{ upper $secret }}
+            {{- range $secret := $svc.parameters.secrets }}
+            - name: {{ $secret }}
               valueFrom:
                 secretKeyRef:
                   name: {{ $secret | replace "_" "-" }}
@@ -53,4 +56,6 @@ spec:
             driver: secrets-store.csi.k8s.io
             readOnly: true
             volumeAttributes:
-              secretProviderClass: {{ printf "gcp-secrets-%s" .Values.linked_service.name }}
+              secretProviderClass: {{ printf "gcp-secrets-%s" $svc.name }}
+{{- end }}
+{{- end }}
