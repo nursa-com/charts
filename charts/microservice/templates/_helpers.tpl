@@ -86,3 +86,18 @@ annotations:
   helm.sh/hook-weight: "1"
   helm.sh/hook-delete-policy: before-hook-creation
 {{- end }}
+
+{{- define "linked_service.annotations" }}
+annotations:
+  timestamp: {{ now | unixEpoch | quote }}
+  "ad.datadoghq.com/{{ .Values.linked_service.name }}.logs": |-
+    [{
+      "source":"{{ .Values.linked_service.name }}",
+      "tags":["pod_ip:%%host%%"]
+    }]
+{{- end }}
+
+{{- define "linked_service.labels" }}
+{{- include "common.labels" . }}
+  tags.datadoghq.com/service: {{ .Values.linked_service.name }}
+{{- end }}
