@@ -1,0 +1,57 @@
+{{- if eq .Values.linked_service.enabled true }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.linked_service.name }}
+  namespace: {{ .Release.Namespace }}
+  {{- include "app.labels" . | indent 2 }}
+  {{- include "common.annotations" . | indent 2 }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.linked_service.name }}
+  replicas: {{ .Values.linked_service.replicas }}
+  template:
+    metadata:
+        {{- include "app.labels" . | indent 6 }}
+        app: {{ .Values.linked_service.name }}
+        {{- include "common.annotations" . | indent 6 }}
+    spec:
+      serviceAccountName: {{ .Values.linked_service.name }}
+      containers:
+        - name: {{ .Values.linked_service.name }}
+          image: {{ .Values.linked_service.image }}
+          ports:
+          - containerPort: {{ .Values.linked_service.port }}
+          resources:
+            requests:
+              cpu: {{ .Values.linked_service.autoscaling.min_cpu }}
+              memory: {{ .Values.linked_service.autoscaling.min_memory }}
+            limits:
+              cpu: {{ .Values.linked_service.autoscaling.max_cpu }}
+              memory: {{ .Values.linked_service.autoscaling.max_memory }}
+            #Range below is for environment variables
+            {{- range $key,$value:= .Values.linked_service.parameters }}
+            - name: {{ upper $key | replace "-" "_" }}
+              value: {{ tpl ($value | toString) $ | quote }}
+            {{- end }}
+            #Range below is for secrets
+            {{- range $secret := .Values.linked_service.secrets }}
+            - name: {{ upper $secret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret | replace "_" "-" }}
+                  key: value
+                  optional: false
+            {{- end }}
+          volumeMounts:
+            - name: gcp-secret-store-vol
+              mountPath: "/var/secrets-store"
+    {{- end }}
+      volumes:
+        - name: gcp-secret-store-vol
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ printf "gcp-secrets-%s" .Values.linked_service.name }}
