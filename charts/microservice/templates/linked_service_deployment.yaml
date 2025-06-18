@@ -47,7 +47,6 @@ spec:
           volumeMounts:
             - name: gcp-secret-store-vol
               mountPath: "/var/secrets-store"
-    {{- end }}
       volumes:
         - name: gcp-secret-store-vol
           csi:
