@@ -178,3 +178,6 @@ init_container:
   command:
     - sleep
     - 10
+
+linked_service:
+  enabled: false
