@@ -105,7 +105,7 @@ annotations:
 {{- define "sa.linked_service.annotations" }}
 annotations:
   iam.gke.io/gcp-service-account: {{ .Values.linked_service.name | quote }}
-  helm.sh/hook: pre-install, pre-upgrade
+  helm.sh/hook: pre-install
   helm.sh/hook-weight: "0"
   helm.sh/hook-delete-policy: hook-failed
 {{- end }}
