@@ -1,3 +1,4 @@
+{{- /* Primary MPA */}}
 apiVersion: autoscaling.gke.io/v1beta1
 kind: MultidimPodAutoscaler
 metadata:
@@ -31,3 +32,39 @@ spec:
           memory: {{ .Values.autoscaling.max_memory }}
   policy:
     updateMode: Auto
+
+{{- if .Values.worker.enabled }}
+---
+{{- /* Worker MPA */}}
+apiVersion: autoscaling.gke.io/v1beta1
+kind: MultidimPodAutoscaler
+metadata:
+  name: {{ printf "mpa-%s-worker" .Release.Name }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-worker
+  goals:
+    metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.cpu_percentage_trigger }}
+  constraints:
+    global:
+      minReplicas: {{ .Values.worker.autoscaling.min_replicas | default .Values.autoscaling.min_replicas }}
+      maxReplicas: {{ .Values.worker.autoscaling.max_replicas | default .Values.autoscaling.max_replicas }}
+    containerControlledResources: [ memory ]
+    container:
+    - name: '*'
+      requests:
+        minAllowed:
+          memory: {{ .Values.worker.autoscaling.min_memory | default .Values.autoscaling.min_memory }}
+        maxAllowed:
+          memory: {{ .Values.worker.autoscaling.max_memory | default .Values.autoscaling.max_memory }}
+  policy:
+    updateMode: Auto
+{{- end }}

@@ -1,3 +1,4 @@
+{{- /* Only create routes for primary service, never for worker */}}
 {{- if eq .Values.api_gateway.expose true }}
 kind: HTTPRoute
 apiVersion: gateway.networking.k8s.io/v1beta1

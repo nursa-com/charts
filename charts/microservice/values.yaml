@@ -181,3 +181,29 @@ init_container:
 
 linked_service:
   enabled: false
+
+# Optional worker deployment configuration
+# When enabled, creates a second deployment for background processing
+worker:
+  # Enable worker deployment alongside the main service
+  enabled: false
+  
+  # Worker-specific parameters (merged with main parameters)
+  # HANDLE_BROKER_MESSAGES is automatically set to true for worker
+  parameters: {}
+  
+  # Worker doesn't expose HTTP services by default
+  service:
+    internalPort: 0
+  
+  api_gateway:
+    expose: false
+  
+  # Worker-specific resource settings (optional overrides)
+  autoscaling:
+    min_memory: 150Mi
+    max_memory: 250Mi
+    min_cpu: 100m
+    max_cpu: 200m
+    min_replicas: 1
+    max_replicas: 3
