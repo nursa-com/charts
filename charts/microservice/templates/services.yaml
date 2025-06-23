@@ -7,7 +7,8 @@ metadata:
     app: {{ include "appname" . }}
 spec:
   selector:
-    app: {{ include "appname" . }}
+    app: {{ .Release.Name }}
+    component: primary
   ports:
 {{- if .Values.service.internalPort }}
   - name: {{ include "appname" . }}-port

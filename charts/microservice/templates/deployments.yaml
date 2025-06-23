@@ -5,8 +5,9 @@ kind: Deployment
 metadata:
   name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
-  {{- include "app.labels" . | indent 2 }}
-  {{- include "common.annotations" . | indent 2 }}
+  labels:
+    component: primary
+  {{- include "app.labels" . | indent 4 }}
 spec:
   strategy:
     type: RollingUpdate
@@ -16,12 +17,16 @@ spec:
   selector:
     matchLabels:
       app: {{ .Release.Name }}
+      component: primary
   replicas: {{ .Values.autoscaling.min_replicas }}
   template:
     metadata:
-        {{- include "app.labels" . | indent 6 }}
+      labels:
         app: {{ .Release.Name }}
-        {{- include "common.annotations" . | indent 6 }}
+        component: primary
+        {{- include "app.labels" . | nindent 8 }}
+      annotations:
+      {{- include "common.annotations" . | nindent 8 }}
     spec:
       serviceAccountName: {{ default (include "appname" .) .Values.serviceAccount }}
       nodeSelector:
@@ -33,6 +38,27 @@ spec:
         - name: {{ .Release.Name }}
           image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
+          env:
+            - name: HANDLE_BROKER_MESSAGES
+              value: {{ .Values.worker.enabled | ternary "false" (.Values.parameters.HANDLE_BROKER_MESSAGES | default "false") | quote }}
+            - name: APP
+              value: {{ .Release.Name }}
+            - name: ENV
+              value: {{ .Values.global.env }}
+            {{- range $key, $value := .Values.parameters }}
+            {{- if ne $key "HANDLE_BROKER_MESSAGES" }}
+            - name: {{ upper $key | replace "-" "_" }}
+              value: {{ tpl ($value | toString) $ | quote }}
+            {{- end }}
+            {{- end }}
+            {{- range $secret := .Values.secrets }}
+            - name: {{ upper $secret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret | replace "_" "-" }}
+                  key: value
+                  optional: false
+            {{- end }}
         {{- if or .Values.service.internalPort (and (eq .Values.debug.enabled true) .Values.debug.port) }}
           ports:
         {{- end }}
@@ -134,3 +160,72 @@ spec:
             readOnly: true
             volumeAttributes:
               secretProviderClass: {{ printf "gcp-secrets-%s" (include "appname" .)}}
+---
+{{- if .Values.worker.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-worker
+  namespace: {{ .Release.Namespace }}
+  labels:
+    component: worker
+    tags.datadoghq.com/service: {{ .Release.Name }}-worker
+    {{- include "app.labels" . | nindent 4 }}
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.deployment.rolloutSurge }}
+      maxUnavailable: {{ .Values.deployment.rolloutUnavailable }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+      component: worker
+  replicas: {{ .Values.worker.autoscaling.min_replicas | default .Values.autoscaling.min_replicas }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+        component: worker
+        tags.datadoghq.com/service: {{ .Release.Name }}-worker
+        {{- include "app.labels" . | nindent 8 }}
+      annotations:
+        {{- include "common.annotations" (dict "root" . "componentName" (printf "%s-worker" .Release.Name)) | nindent 8 }}
+    spec:
+      serviceAccountName: {{ default (include "appname" .) .Values.serviceAccount }}
+      # ... (nodeSelector for worker)
+      containers:
+        - name: {{ .Release.Name }}-worker
+          image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          env:
+            - name: HANDLE_BROKER_MESSAGES
+              value: "true"
+            - name: APP
+              value: {{ .Release.Name }}-worker
+            - name: ENV
+              value: {{ .Values.global.env }}
+            {{- range $key, $value := .Values.parameters }}
+            {{- if ne $key "HANDLE_BROKER_MESSAGES" }}
+            - name: {{ upper $key | replace "-" "_" }}
+              value: {{ tpl ($value | toString) $ | quote }}
+            {{- end }}
+            {{- end }}
+            {{- range $key, $value := .Values.worker.parameters }}
+            {{- if ne $key "HANDLE_BROKER_MESSAGES" }}
+            - name: {{ upper $key | replace "-" "_" }}
+              value: {{ tpl ($value | toString) $ | quote }}
+            {{- end }}
+            {{- end }}
+                    volumeMounts:
+            - name: gcp-secret-store-vol
+              mountPath: "/var/secrets-store"
+    {{- end }}
+      volumes:
+        - name: gcp-secret-store-vol
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ printf "gcp-secrets-%s" (include "appname" .)}}
+
