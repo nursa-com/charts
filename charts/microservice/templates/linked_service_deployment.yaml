@@ -17,7 +17,7 @@ spec:
         app: {{ .Values.linked_service.name }}
 {{- include "linked_service.annotations" $ | indent 6 }}
     spec:
-      serviceAccountName: {{ .Values.linked_service.parameters.serviceAccountName }}
+      serviceAccountName: {{ default (include "appname" .) .Values.serviceAccount }}
       containers:
         - name: {{ .Values.linked_service.name }}
           image: {{ printf "%s:%s" .Values.linked_service.parameters.image.repository .Values.linked_service.parameters.image.tag }}
