@@ -54,5 +54,5 @@ spec:
             driver: secrets-store.csi.k8s.io
             readOnly: true
             volumeAttributes:
-              secretProviderClass: {{ printf "gcp-secrets-%s" .Values.linked_service.name }}
+              secretProviderClass: {{ printf "gcp-secrets-%s" (include "appname" .)}}
 {{- end }}
