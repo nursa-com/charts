@@ -5,8 +5,9 @@ kind: Deployment
 metadata:
   name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
-  {{- include "app.labels" . | indent 2 }}
-  {{- include "common.annotations" . | indent 2 }}
+  labels:
+    component: primary
+    {{- include "app.labels" . | nindent 4 }}
 spec:
   strategy:
     type: RollingUpdate
@@ -16,12 +17,16 @@ spec:
   selector:
     matchLabels:
       app: {{ .Release.Name }}
+      component: primary
   replicas: {{ .Values.autoscaling.min_replicas }}
   template:
     metadata:
-        {{- include "app.labels" . | indent 6 }}
+      labels:
         app: {{ .Release.Name }}
-        {{- include "common.annotations" . | indent 6 }}
+        component: primary
+        {{- include "app.labels" . | nindent 8 }}
+      annotations:
+        {{- include "common.annotations" . | nindent 8 }}
     spec:
       serviceAccountName: {{ default (include "appname" .) .Values.serviceAccount }}
       nodeSelector:
@@ -33,88 +38,87 @@ spec:
         - name: {{ .Release.Name }}
           image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
-        {{- if or .Values.service.internalPort (and (eq .Values.debug.enabled true) .Values.debug.port) }}
+          env:
+            - name: HANDLE_BROKER_MESSAGES
+              value: {{ .Values.worker.enabled | ternary "false" (.Values.parameters.HANDLE_BROKER_MESSAGES | default "false") | quote }}
+            - name: APP
+              value: {{ .Release.Name }}
+            - name: ENV
+              value: {{ .Values.global.env }}
+            {{- range $key, $value := .Values.parameters }}
+            {{- if ne $key "HANDLE_BROKER_MESSAGES" }}
+            - name: {{ upper $key | replace "-" "_" }}
+              value: {{ tpl ($value | toString) $ | quote }}
+            {{- end }}
+            {{- end }}
+            {{- range $secret := .Values.secrets }}
+            - name: {{ upper $secret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret | replace "_" "-" }}
+                  key: value
+                  optional: false
+            {{- end }}
+          volumeMounts:
+            - name: gcp-secret-store-vol
+              mountPath: "/var/secrets-store"
+              readOnly: true
+          {{- if or .Values.service.internalPort (and .Values.debug.enabled .Values.debug.port) }}
           ports:
-        {{- end }}
-        {{- if .Values.service.internalPort }}
-          - containerPort: {{ .Values.service.internalPort }}
-        {{- end }}
-        {{- if and (eq .Values.debug.enabled true) .Values.debug.port }}
-          - containerPort: {{ .Values.debug.port }}
-        {{- end }}
-      {{- if .Values.probeConfig }}
-        {{- if .Values.startupProbe }}
-          startupProbe: {{- toYaml .Values.probeConfig | nindent 12 }} {{- toYaml .Values.startupProbe | nindent 12 }}
-        {{- end }}
-        {{- if .Values.livenessProbe }}
-          livenessProbe: {{- toYaml .Values.probeConfig | nindent 12 }} {{- toYaml .Values.livenessProbe | nindent 12 }}
-        {{- end }}
-        {{- if .Values.readinessProbe }}
-          readinessProbe: {{- toYaml .Values.probeConfig | nindent 12 }} {{- toYaml .Values.readinessProbe | nindent 12 }}
-        {{- end }}
-      {{- end }}
-        {{- if ne .Values.debug.enabled true }}
+            {{- if .Values.service.internalPort }}
+            - containerPort: {{ .Values.service.internalPort }}
+            {{- end }}
+            {{- if and .Values.debug.enabled .Values.debug.port }}
+            - containerPort: {{ .Values.debug.port }}
+            {{- end }}
+          {{- end }}
+          {{- $probe := .Values.probeConfig | default dict }}
+          {{- if .Values.startupProbe }}
+          startupProbe:
+            {{- merge $probe .Values.startupProbe | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe:
+            {{- merge $probe .Values.livenessProbe | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe:
+            {{- merge $probe .Values.readinessProbe | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if not .Values.debug.enabled }}
           resources:
             requests:
               cpu: {{ .Values.autoscaling.min_cpu }}
               memory: {{ .Values.autoscaling.min_memory }}
             limits:
-            {{- if .Values.autoscaling.max_cpu }}
+              {{- if .Values.autoscaling.max_cpu }}
               cpu: {{ .Values.autoscaling.max_cpu }}
-            {{- end }}
+              {{- end }}
               memory: {{ .Values.autoscaling.max_memory }}
-        {{- end }}
-        {{- if eq .Values.debug.enabled true }}
-          command: {{ mustRegexSplit " +" .Values.debug.command -1 | toJson }}
-
-        {{- end }}
-          env:
-            - name: APP
-              value: {{ .Release.Name }}
-            - name: ENV
-              value: {{ .Values.global.env }}
-
-            #Range below is for environment variables
-            {{- range $key,$value:= .Values.parameters }}
-            - name: {{ upper $key | replace "-" "_" }}
-              value: {{ tpl ($value | toString) $ | quote }}
-            {{- end }}
-
-            #Range below is for secrets
-            {{- range $secret := .Values.secrets }}
-            - name: {{ upper $secret }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $secret | replace "_" "-" }}
-                  key: value
-                  optional: false
-            {{- end }}
-
+          {{- end }}
+          {{- if .Values.debug.enabled }}
+          command: {{ mustRegexSplit " +" .Values.debug.command -1 | toYaml | nindent 12 }}
+          {{- end }}
           volumeMounts:
             - name: gcp-secret-store-vol
               mountPath: "/var/secrets-store"
-    {{- if eq .Values.init_container.enabled true }}
+              readOnly: true
+      {{- if .Values.init_container.enabled }}
       initContainers:
         - name: {{ .Release.Name }}-init-script
           image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           command:
-            {{ range $arg:= .Values.init_container.command }}
-            - {{$arg | quote}}
-            {{- end }}
+            {{- .Values.init_container.command | toYaml | nindent 12 }}
           env:
             - name: APP
               value: {{ .Release.Name }}
             - name: ENV
               value: {{ .Values.global.env }}
-
-            #Range below is for environment variables
             {{- range $key,$value:= .Values.parameters }}
             - name: {{ upper $key | replace "-" "_" }}
               value: {{ tpl ($value | toString) $ | quote }}
             {{- end }}
-
-            #Range below is for secrets
             {{- range $secret := .Values.secrets }}
             - name: {{ upper $secret }}
               valueFrom:
@@ -126,7 +130,8 @@ spec:
           volumeMounts:
             - name: gcp-secret-store-vol
               mountPath: "/var/secrets-store"
-    {{- end }}
+              readOnly: true
+      {{- end }}
       volumes:
         - name: gcp-secret-store-vol
           csi:
@@ -134,3 +139,94 @@ spec:
             readOnly: true
             volumeAttributes:
               secretProviderClass: {{ printf "gcp-secrets-%s" (include "appname" .)}}
+---
+{{- if .Values.worker.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-worker
+  namespace: {{ .Release.Namespace }}
+  labels:
+    component: worker
+    tags.datadoghq.com/service: {{ .Release.Name }}-worker
+    {{- include "worker.labels" . | nindent 4 }}
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.worker.deployment.rolloutSurge | default .Values.deployment.rolloutSurge }}
+      maxUnavailable: {{ .Values.worker.deployment.rolloutUnavailable | default .Values.deployment.rolloutUnavailable }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+      component: worker
+  replicas: {{ .Values.worker.autoscaling.min_replicas | default .Values.autoscaling.min_replicas }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+        component: worker
+        tags.datadoghq.com/service: {{ .Release.Name }}-worker
+        {{- include "worker.labels" . | nindent 8 }}
+      annotations:
+        {{- include "common.annotations" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ default (include "appname" .) .Values.serviceAccount }}
+      nodeSelector:
+        iam.gke.io/gke-metadata-server-enabled: "true"
+        {{- $nodeSelectors := .Values.worker.deployment.nodeSelector | default .Values.deployment.nodeSelector }}
+        {{- range $key,$value:= $nodeSelectors }}
+        {{ $key }}: {{ tpl ($value | toString) $ | quote }}
+        {{- end }}
+      containers:
+        - name: {{ .Release.Name }}-worker
+          image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          env:
+            - name: HANDLE_BROKER_MESSAGES
+              value: "true"
+            - name: APP
+              value: {{ .Release.Name }}-worker
+            - name: ENV
+              value: {{ .Values.global.env }}
+            {{- range $key, $value := .Values.parameters }}
+            {{- if ne $key "HANDLE_BROKER_MESSAGES" }}
+            - name: {{ upper $key | replace "-" "_" }}
+              value: {{ tpl ($value | toString) $ | quote }}
+            {{- end }}
+            {{- end }}
+            {{- range $key, $value := .Values.worker.parameters }}
+            {{- if ne $key "HANDLE_BROKER_MESSAGES" }}
+            - name: {{ upper $key | replace "-" "_" }}
+              value: {{ tpl ($value | toString) $ | quote }}
+            {{- end }}
+            {{- end }}
+            {{- range $secret := .Values.secrets }}
+            - name: {{ upper $secret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret | replace "_" "-" }}
+                  key: value
+                  optional: false
+            {{- end }}
+          volumeMounts:
+            - name: gcp-secret-store-vol
+              mountPath: "/var/secrets-store"
+              readOnly: true
+          resources:
+            requests:
+              cpu: {{ .Values.worker.autoscaling.min_cpu | default .Values.autoscaling.min_cpu }}
+              memory: {{ .Values.worker.autoscaling.min_memory | default .Values.autoscaling.min_memory }}
+            limits:
+              {{- if or .Values.worker.autoscaling.max_cpu .Values.autoscaling.max_cpu }}
+              cpu: {{ .Values.worker.autoscaling.max_cpu | default .Values.autoscaling.max_cpu }}
+              {{- end }}
+              memory: {{ .Values.worker.autoscaling.max_memory | default .Values.autoscaling.max_memory }}
+      volumes:
+        - name: gcp-secret-store-vol
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ printf "gcp-secrets-%s" (include "appname" .)}}
+{{- end }}
