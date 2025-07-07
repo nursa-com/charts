@@ -108,4 +108,3 @@ helm.sh/hook: pre-install
 helm.sh/hook-weight: "0"
 helm.sh/hook-delete-policy: hook-failed
 {{- end }}
-

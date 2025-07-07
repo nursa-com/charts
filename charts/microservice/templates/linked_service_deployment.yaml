@@ -17,7 +17,7 @@ spec:
         app: {{ .Values.linked_service.name }}
 {{- include "linked_service.annotations" $ | indent 6 }}
     spec:
-      serviceAccountName: {{ default (include "appname" .) .Values.serviceAccount }}
+      serviceAccountName: {{ .Values.linked_service.parameters.serviceAccountName }}
       containers:
         - name: {{ .Values.linked_service.name }}
           image: {{ printf "%s:%s" .Values.linked_service.parameters.image.repository .Values.linked_service.parameters.image.tag }}
@@ -54,5 +54,5 @@ spec:
             driver: secrets-store.csi.k8s.io
             readOnly: true
             volumeAttributes:
-              secretProviderClass: {{ printf "gcp-secrets-%s" (include "appname" .)}}
+              secretProviderClass: {{ printf "gcp-secrets-%s" .Values.linked_service.name }}
 {{- end }}
