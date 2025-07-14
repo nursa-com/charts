@@ -17,7 +17,6 @@ spec:
   selector:
     matchLabels:
       app: {{ .Release.Name }}
-      component: primary
   replicas: {{ .Values.autoscaling.min_replicas }}
   template:
     metadata:
@@ -158,13 +157,12 @@ spec:
       maxUnavailable: {{ .Values.worker.deployment.rolloutUnavailable | default .Values.deployment.rolloutUnavailable }}
   selector:
     matchLabels:
-      app: {{ .Release.Name }}
-      component: worker
+      app: {{ .Release.Name }}-worker
   replicas: {{ .Values.worker.autoscaling.min_replicas | default .Values.autoscaling.min_replicas }}
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}
+        app: {{ .Release.Name }}-worker
         component: worker
         tags.datadoghq.com/service: {{ .Release.Name }}-worker
         {{- include "worker.labels" . | nindent 8 }}

@@ -7,7 +7,6 @@ spec:
   selector:
     matchLabels:
       app: {{ include "appname" . }}
-      component: primary
 ---
 {{- if .Values.worker.enabled }}
 apiVersion: policy/v1
@@ -17,6 +16,5 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: {{ .Release.Name }}
-      component: worker
+      app: {{ .Release.Name }}-worker
 {{- end }}
