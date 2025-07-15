@@ -50,20 +50,20 @@ spec:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: {{ .Values.autoscaling.cpu_percentage_trigger }}
+          averageUtilization: {{ default .Values.autoscaling.cpu_percentage_trigger (dig "autoscaling" "cpu_percentage_trigger" nil .Values.worker) }}
   constraints:
     global:
-      minReplicas: {{ .Values.autoscaling.min_replicas }}
-      maxReplicas: {{ .Values.autoscaling.max_replicas }}
+      minReplicas: {{ default .Values.autoscaling.min_replicas (dig "autoscaling" "min_replicas" nil .Values.worker) }}
+      maxReplicas: {{ default .Values.autoscaling.max_replicas (dig "autoscaling" "max_replicas" nil .Values.worker) }}
     containerControlledResources: [ memory ]
     container:
     - name: '*'
     # Define boundaries for the memory request here
       requests:
         minAllowed:
-          memory: {{ .Values.autoscaling.min_memory }}
+          memory: {{ default .Values.autoscaling.min_memory (dig "autoscaling" "min_memory" nil .Values.worker) }}
         maxAllowed:
-          memory: {{ .Values.autoscaling.max_memory }}
+          memory: {{ default .Values.autoscaling.max_memory (dig "autoscaling" "max_memory" nil .Values.worker) }}
   policy:
     updateMode: Auto
 {{- end }}
