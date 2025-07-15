@@ -8,7 +8,7 @@ spec:
     matchLabels:
       app: {{ include "appname" . }}
 ---
-{{- if .Values.worker.enabled }}
+{{- if and (hasKey .Values "worker") .Values.worker.enabled }}
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:

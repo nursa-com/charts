@@ -39,7 +39,7 @@ spec:
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           env:
             - name: HANDLE_BROKER_MESSAGES
-              value: {{ .Values.worker.enabled | ternary "false" (.Values.parameters.HANDLE_BROKER_MESSAGES | default "false") | quote }}
+              value: {{ if (hasKey .Values "worker") }}{{ .Values.worker.enabled | not | quote }}{{ else }}{{ "true" | quote }}{{ end }}
             - name: APP
               value: {{ .Release.Name }}
             - name: ENV
@@ -139,7 +139,7 @@ spec:
             volumeAttributes:
               secretProviderClass: {{ printf "gcp-secrets-%s" (include "appname" .)}}
 ---
-{{- if .Values.worker.enabled }}
+{{- if and (hasKey .Values "worker") .Values.worker.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -153,12 +153,12 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: {{ .Values.worker.deployment.rolloutSurge | default .Values.deployment.rolloutSurge }}
-      maxUnavailable: {{ .Values.worker.deployment.rolloutUnavailable | default .Values.deployment.rolloutUnavailable }}
+      maxSurge: {{ default .Values.deployment.rolloutSurge (dig "deployment" "rolloutSurge" nil .Values.worker) }}
+      maxUnavailable: {{ default .Values.deployment.rolloutUnavailable (dig "deployment" "rolloutUnavailable" nil .Values.worker) }}
   selector:
     matchLabels:
       app: {{ .Release.Name }}-worker
-  replicas: {{ .Values.worker.autoscaling.min_replicas | default .Values.autoscaling.min_replicas }}
+  replicas: {{ default .Values.autoscaling.min_replicas (dig "autoscaling" "min_replicas" nil .Values.worker) }}
   template:
     metadata:
       labels:
@@ -172,7 +172,7 @@ spec:
       serviceAccountName: {{ default (include "appname" .) .Values.serviceAccount }}
       nodeSelector:
         iam.gke.io/gke-metadata-server-enabled: "true"
-        {{- $nodeSelectors := .Values.worker.deployment.nodeSelector | default .Values.deployment.nodeSelector }}
+        {{- $nodeSelectors := default .Values.deployment.nodeSelector (dig "deployment" "nodeSelector" nil .Values.worker) }}
         {{- range $key,$value:= $nodeSelectors }}
         {{ $key }}: {{ tpl ($value | toString) $ | quote }}
         {{- end }}
@@ -213,13 +213,13 @@ spec:
               readOnly: true
           resources:
             requests:
-              cpu: {{ .Values.worker.autoscaling.min_cpu | default .Values.autoscaling.min_cpu }}
-              memory: {{ .Values.worker.autoscaling.min_memory | default .Values.autoscaling.min_memory }}
+              cpu: {{ default .Values.autoscaling.min_cpu (dig "autoscaling" "min_cpu" nil .Values.worker) }}
+              memory: {{ default .Values.autoscaling.min_memory (dig "autoscaling" "min_memory" nil .Values.worker) }}
             limits:
-              {{- if or .Values.worker.autoscaling.max_cpu .Values.autoscaling.max_cpu }}
-              cpu: {{ .Values.worker.autoscaling.max_cpu | default .Values.autoscaling.max_cpu }}
+              {{- if or (dig "autoscaling" "max_cpu" nil .Values.worker) .Values.autoscaling.max_cpu }}
+              cpu: {{ default .Values.autoscaling.max_cpu (dig "autoscaling" "max_cpu" nil .Values.worker) }}
               {{- end }}
-              memory: {{ .Values.worker.autoscaling.max_memory | default .Values.autoscaling.max_memory }}
+              memory: {{ default .Values.autoscaling.max_memory (dig "autoscaling" "max_memory" nil .Values.worker) }}
       volumes:
         - name: gcp-secret-store-vol
           csi:

@@ -32,7 +32,7 @@ spec:
   policy:
     updateMode: Auto
 ---
-{{- if .Values.worker.enabled }}
+{{- if and (hasKey .Values "worker") .Values.worker.enabled }}
 apiVersion: autoscaling.gke.io/v1beta1
 kind: MultidimPodAutoscaler
 metadata:
