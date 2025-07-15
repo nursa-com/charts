@@ -7,3 +7,14 @@ spec:
   selector:
     matchLabels:
       app: {{ include "appname" . }}
+---
+{{- if and (hasKey .Values "worker") .Values.worker.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-worker-pdb
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-worker
+{{- end }}

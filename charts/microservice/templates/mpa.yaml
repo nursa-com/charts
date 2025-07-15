@@ -31,3 +31,39 @@ spec:
           memory: {{ .Values.autoscaling.max_memory }}
   policy:
     updateMode: Auto
+---
+{{- if and (hasKey .Values "worker") .Values.worker.enabled }}
+apiVersion: autoscaling.gke.io/v1beta1
+kind: MultidimPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-worker-mpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-worker
+  goals:
+    metrics:
+    - type: Resource
+      resource:
+      # Define the target CPU utilization request here
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ default .Values.autoscaling.cpu_percentage_trigger (dig "autoscaling" "cpu_percentage_trigger" nil .Values.worker) }}
+  constraints:
+    global:
+      minReplicas: {{ default .Values.autoscaling.min_replicas (dig "autoscaling" "min_replicas" nil .Values.worker) }}
+      maxReplicas: {{ default .Values.autoscaling.max_replicas (dig "autoscaling" "max_replicas" nil .Values.worker) }}
+    containerControlledResources: [ memory ]
+    container:
+    - name: '*'
+    # Define boundaries for the memory request here
+      requests:
+        minAllowed:
+          memory: {{ default .Values.autoscaling.min_memory (dig "autoscaling" "min_memory" nil .Values.worker) }}
+        maxAllowed:
+          memory: {{ default .Values.autoscaling.max_memory (dig "autoscaling" "max_memory" nil .Values.worker) }}
+  policy:
+    updateMode: Auto
+{{- end }}
