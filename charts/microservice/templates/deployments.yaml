@@ -39,7 +39,7 @@ spec:
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           env:
             - name: HANDLE_BROKER_MESSAGES
-              value: {{ if (hasKey .Values "worker") }}{{ .Values.worker.enabled | not | quote }}{{ else }}{{ "true" | quote }}{{ end }}
+              value: {{ if (and (hasKey .Values "worker") (hasKey .Values.worker "enabled") .Values.worker.enabled) }}{{ "false" | quote }}{{ else }}{{ "true" | quote }}{{ end }}
             - name: APP
               value: {{ .Release.Name }}
             - name: ENV
@@ -139,7 +139,7 @@ spec:
             volumeAttributes:
               secretProviderClass: {{ printf "gcp-secrets-%s" (include "appname" .)}}
 ---
-{{- if and (hasKey .Values "worker") .Values.worker.enabled }}
+{{- if and (hasKey .Values "worker") (hasKey .Values.worker "enabled") .Values.worker.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -153,12 +153,30 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: {{ default .Values.deployment.rolloutSurge (dig "deployment" "rolloutSurge" nil .Values.worker) }}
-      maxUnavailable: {{ default .Values.deployment.rolloutUnavailable (dig "deployment" "rolloutUnavailable" nil .Values.worker) }}
+      {{- $workerRolloutSurge := "" }}
+      {{- if and (hasKey .Values.worker "deployment") (hasKey .Values.worker.deployment "rolloutSurge") }}
+      {{- $workerRolloutSurge = .Values.worker.deployment.rolloutSurge }}
+      {{- else }}
+      {{- $workerRolloutSurge = .Values.deployment.rolloutSurge }}
+      {{- end }}
+      maxSurge: {{ $workerRolloutSurge }}
+      {{- $workerRolloutUnavailable := "" }}
+      {{- if and (hasKey .Values.worker "deployment") (hasKey .Values.worker.deployment "rolloutUnavailable") }}
+      {{- $workerRolloutUnavailable = .Values.worker.deployment.rolloutUnavailable }}
+      {{- else }}
+      {{- $workerRolloutUnavailable = .Values.deployment.rolloutUnavailable }}
+      {{- end }}
+      maxUnavailable: {{ $workerRolloutUnavailable }}
   selector:
     matchLabels:
       app: {{ .Release.Name }}-worker
-  replicas: {{ default .Values.autoscaling.min_replicas (dig "autoscaling" "min_replicas" nil .Values.worker) }}
+  {{- $workerReplicas := "" }}
+  {{- if and (hasKey .Values.worker "autoscaling") (hasKey .Values.worker.autoscaling "min_replicas") }}
+  {{- $workerReplicas = .Values.worker.autoscaling.min_replicas }}
+  {{- else }}
+  {{- $workerReplicas = .Values.autoscaling.min_replicas }}
+  {{- end }}
+  replicas: {{ $workerReplicas }}
   template:
     metadata:
       labels:
@@ -172,8 +190,13 @@ spec:
       serviceAccountName: {{ default (include "appname" .) .Values.serviceAccount }}
       nodeSelector:
         iam.gke.io/gke-metadata-server-enabled: "true"
-        {{- $nodeSelectors := default .Values.deployment.nodeSelector (dig "deployment" "nodeSelector" nil .Values.worker) }}
-        {{- range $key,$value:= $nodeSelectors }}
+        {{- $nodeSelectors := dict }}
+        {{- if and (hasKey .Values.worker "deployment") (hasKey .Values.worker.deployment "nodeSelector") }}
+        {{- $nodeSelectors = .Values.worker.deployment.nodeSelector }}
+        {{- else }}
+        {{- $nodeSelectors = .Values.deployment.nodeSelector }}
+        {{- end }}
+        {{- range $key,$value := $nodeSelectors }}
         {{ $key }}: {{ tpl ($value | toString) $ | quote }}
         {{- end }}
       containers:
@@ -193,10 +216,12 @@ spec:
               value: {{ tpl ($value | toString) $ | quote }}
             {{- end }}
             {{- end }}
+            {{- if hasKey .Values.worker "parameters" }}
             {{- range $key, $value := .Values.worker.parameters }}
             {{- if ne $key "HANDLE_BROKER_MESSAGES" }}
             - name: {{ upper $key | replace "-" "_" }}
               value: {{ tpl ($value | toString) $ | quote }}
+            {{- end }}
             {{- end }}
             {{- end }}
             {{- range $secret := .Values.secrets }}
@@ -213,13 +238,38 @@ spec:
               readOnly: true
           resources:
             requests:
-              cpu: {{ default .Values.autoscaling.min_cpu (dig "autoscaling" "min_cpu" nil .Values.worker) }}
-              memory: {{ default .Values.autoscaling.min_memory (dig "autoscaling" "min_memory" nil .Values.worker) }}
-            limits:
-              {{- if or (dig "autoscaling" "max_cpu" nil .Values.worker) .Values.autoscaling.max_cpu }}
-              cpu: {{ default .Values.autoscaling.max_cpu (dig "autoscaling" "max_cpu" nil .Values.worker) }}
+              {{- $workerMinCPU := "" }}
+              {{- if and (hasKey .Values.worker "autoscaling") (hasKey .Values.worker.autoscaling "min_cpu") }}
+              {{- $workerMinCPU = .Values.worker.autoscaling.min_cpu }}
+              {{- else }}
+              {{- $workerMinCPU = .Values.autoscaling.min_cpu }}
               {{- end }}
-              memory: {{ default .Values.autoscaling.max_memory (dig "autoscaling" "max_memory" nil .Values.worker) }}
+              cpu: {{ $workerMinCPU }}
+              {{- $workerMinMemory := "" }}
+              {{- if and (hasKey .Values.worker "autoscaling") (hasKey .Values.worker.autoscaling "min_memory") }}
+              {{- $workerMinMemory = .Values.worker.autoscaling.min_memory }}
+              {{- else }}
+              {{- $workerMinMemory = .Values.autoscaling.min_memory }}
+              {{- end }}
+              memory: {{ $workerMinMemory }}
+            limits:
+              {{- $hasWorkerMaxCPU := and (hasKey .Values.worker "autoscaling") (hasKey .Values.worker.autoscaling "max_cpu") }}
+              {{- if or $hasWorkerMaxCPU .Values.autoscaling.max_cpu }}
+              {{- $workerMaxCPU := "" }}
+              {{- if $hasWorkerMaxCPU }}
+              {{- $workerMaxCPU = .Values.worker.autoscaling.max_cpu }}
+              {{- else }}
+              {{- $workerMaxCPU = .Values.autoscaling.max_cpu }}
+              {{- end }}
+              cpu: {{ $workerMaxCPU }}
+              {{- end }}
+              {{- $workerMaxMemory := "" }}
+              {{- if and (hasKey .Values.worker "autoscaling") (hasKey .Values.worker.autoscaling "max_memory") }}
+              {{- $workerMaxMemory = .Values.worker.autoscaling.max_memory }}
+              {{- else }}
+              {{- $workerMaxMemory = .Values.autoscaling.max_memory }}
+              {{- end }}
+              memory: {{ $workerMaxMemory }}
       volumes:
         - name: gcp-secret-store-vol
           csi:

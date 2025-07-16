@@ -32,7 +32,8 @@ spec:
   policy:
     updateMode: Auto
 ---
-{{- if and (hasKey .Values "worker") .Values.worker.enabled }}
+{{- if (hasKey .Values "worker") }}
+{{- if (and (hasKey .Values.worker "enabled") .Values.worker.enabled) }}
 apiVersion: autoscaling.gke.io/v1beta1
 kind: MultidimPodAutoscaler
 metadata:
@@ -66,4 +67,5 @@ spec:
           memory: {{ default .Values.autoscaling.max_memory (dig "autoscaling" "max_memory" nil .Values.worker) }}
   policy:
     updateMode: Auto
+{{- end }}
 {{- end }}

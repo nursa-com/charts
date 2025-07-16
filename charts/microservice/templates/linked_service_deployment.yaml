@@ -4,8 +4,21 @@ kind: Deployment
 metadata:
   name: {{ .Values.linked_service.name }}
   namespace: {{ .Release.Namespace }}
-  {{- include "linked_service.labels" $ | indent 2 }}
-  {{- include "linked_service.annotations" $ | indent 2 }}
+  labels:
+    app: {{ .Values.linked_service.name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    env: {{ .Values.global.env }}
+    version: {{ .Values.global.app_version }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    tags.datadoghq.com/service: {{ .Values.linked_service.name }}
+  annotations:
+    timestamp: {{ now | unixEpoch | quote }}
+    "ad.datadoghq.com/{{ .Values.linked_service.name }}.logs": |-
+      [{
+        "source":"splitio-sync",
+        "tags":["pod_ip:%%host%%"]
+      }]
 spec:
   selector:
     matchLabels:
@@ -13,9 +26,21 @@ spec:
   replicas: {{ .Values.linked_service.parameters.replicas }}
   template:
     metadata:
-{{- include "linked_service.labels" $ | indent 6 }}
+      labels:
         app: {{ .Values.linked_service.name }}
-{{- include "linked_service.annotations" $ | indent 6 }}
+        chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+        release: {{ .Release.Name }}
+        env: {{ .Values.global.env }}
+        version: {{ .Values.global.app_version }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        tags.datadoghq.com/service: {{ .Values.linked_service.name }}
+      annotations:
+        timestamp: {{ now | unixEpoch | quote }}
+        "ad.datadoghq.com/{{ .Values.linked_service.name }}.logs": |-
+          [{
+            "source":"splitio-sync",
+            "tags":["pod_ip:%%host%%"]
+          }]
     spec:
       serviceAccountName: {{ .Values.linked_service.parameters.serviceAccountName }}
       containers:

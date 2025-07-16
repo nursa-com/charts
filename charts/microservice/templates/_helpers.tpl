@@ -15,6 +15,7 @@ chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
 release: {{ include "appname" . }}
 env: {{ .Values.global.env }}
 version: {{ .Values.global.appVersion }}
+app.kubernetes.io/managed-by: Helm
 {{- if .Values.global.additionalLabels }}
 {{- .Values.global.additionalLabels | toYaml | nindent 0 }}
 {{- end }}
@@ -86,6 +87,8 @@ timestamp: {{ now | unixEpoch | quote }}
 helm.sh/hook: pre-install,pre-upgrade 
 helm.sh/hook-weight: "1"
 helm.sh/hook-delete-policy: before-hook-creation
+meta.helm.sh/release-name: {{ .Release.Name | quote }}
+meta.helm.sh/release-namespace: {{ .Release.Namespace | quote }}
 {{- end }}
 
 {{- define "linked_service.annotations" }}
