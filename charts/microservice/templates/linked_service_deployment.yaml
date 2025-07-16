@@ -4,8 +4,10 @@ kind: Deployment
 metadata:
   name: {{ .Values.linked_service.name }}
   namespace: {{ .Release.Namespace }}
-  {{- include "linked_service.labels" $ | indent 2 }}
-  {{- include "linked_service.annotations" $ | indent 2 }}
+  labels:
+{{- include "linked_service.labels" $ | indent 4 }}
+  annotations:
+{{- include "linked_service.annotations" $ | indent 4 }}
 spec:
   selector:
     matchLabels:
@@ -13,9 +15,10 @@ spec:
   replicas: {{ .Values.linked_service.parameters.replicas }}
   template:
     metadata:
-{{- include "linked_service.labels" $ | indent 6 }}
-        app: {{ .Values.linked_service.name }}
-{{- include "linked_service.annotations" $ | indent 6 }}
+      labels:
+{{- include "linked_service.labels" $ | indent 8 }}
+      annotations:
+{{- include "linked_service.annotations" $ | indent 8 }}
     spec:
       serviceAccountName: {{ .Values.linked_service.parameters.serviceAccountName }}
       containers:
