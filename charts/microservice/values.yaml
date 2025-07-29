@@ -28,9 +28,9 @@ imagePullPolicy: Always
 migration:
   enabled: false
   command: sleep 10
-  min_memory: 100Mi
+  min_memory: 500Mi
   max_memory: 500Mi
-  min_cpu: 100m
+  min_cpu: 400m
   max_cpu: null
 
 ## Start the app in debug mode, overriding the entrypoint command
