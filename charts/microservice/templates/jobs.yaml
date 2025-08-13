@@ -24,6 +24,15 @@ spec:
         {{- end }}
       containers:
       - name: {{ .Release.Name }}-migrator
+        resources:
+          limits:
+          {{- if .Values.migration.max_cpu }}
+            cpu: {{ .Values.migration.max_cpu }}
+          {{- end }}
+            memory: {{ .Values.migration.max_memory }}
+          requests:
+            cpu: {{ .Values.migration.min_cpu }}
+            memory: {{ .Values.migration.min_memory }}
         {{- if .Values.migration.image }}
         image: {{ printf "%s:%s" .Values.migration.image .Values.image_tag }}
         {{- else }}
