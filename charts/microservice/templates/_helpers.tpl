@@ -97,8 +97,8 @@ timestamp: {{ now | unixEpoch | quote }}
   }]
 {{- end }}
 
-{{- define "linked_service.labels" }}
-{{- include "common.labels" . | nindent 0 }}
+{{- define "linked_service.labels" -}}
+{{- include "common.labels" . | trim }}
 tags.datadoghq.com/service: {{ .Values.linked_service.name }}
 {{- end }}
 
