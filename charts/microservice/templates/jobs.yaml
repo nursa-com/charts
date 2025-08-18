@@ -4,16 +4,20 @@ kind: Job
 metadata:
   name: {{ .Release.Name }}-migrator
   namespace: {{ .Release.Namespace }}
-{{- include "migration.labels" . | indent 2 }}
-{{- include "migration.annotations" . | indent 2 }}
+  labels:
+    {{- include "migration.labels" . | nindent 4 }}
+spec:
 spec:
   backoffLimit: 0
   template:
     metadata:
       name: "{{ .Release.Name }}"
       namespace: {{ .Release.Namespace }}
-{{- include "migration.labels" . | indent 6 }}
-{{- include "migration.annotations" . | indent 6 }}
+      labels:
+        {{- include "migration.labels" . | nindent 8 }}
+      annotations:
+        {{- include "migration.annotations" . | nindent 8 }}
+spec:
     spec:
       restartPolicy: Never
       serviceAccountName: {{ index .Values.serviceAccount }}
