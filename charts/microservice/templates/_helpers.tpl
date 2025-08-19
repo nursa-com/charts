@@ -16,7 +16,7 @@ release: {{ include "appname" . }}
 env: {{ .Values.global.env }}
 version: {{ .Values.global.appVersion }}
 {{- if .Values.global.additionalLabels }}
-{{- .Values.global.additionalLabels | toYaml | nindent 2 }}
+{{- .Values.global.additionalLabels | toYaml | nindent 0 }}
 {{- end }}
 {{- end }}
 
