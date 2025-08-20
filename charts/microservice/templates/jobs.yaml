@@ -7,7 +7,6 @@ metadata:
   labels:
     {{- include "migration.labels" . | nindent 4 }}
 spec:
-spec:
   backoffLimit: 0
   template:
     metadata:
@@ -17,7 +16,6 @@ spec:
         {{- include "migration.labels" . | nindent 8 }}
       annotations:
         {{- include "migration.annotations" . | nindent 8 }}
-spec:
     spec:
       restartPolicy: Never
       serviceAccountName: {{ index .Values.serviceAccount }}
@@ -27,47 +25,47 @@ spec:
         {{ $key }}: {{ tpl ($value | toString) $ | quote }}
         {{- end }}
       containers:
-      - name: {{ .Release.Name }}-migrator
-        resources:
-          limits:
-          {{- if .Values.migration.max_cpu }}
-            cpu: {{ .Values.migration.max_cpu }}
+        - name: {{ .Release.Name }}-migrator
+          resources:
+            limits:
+            {{- if .Values.migration.max_cpu }}
+              cpu: {{ .Values.migration.max_cpu }}
+            {{- end }}
+              memory: {{ .Values.migration.max_memory }}
+            requests:
+              cpu: {{ .Values.migration.min_cpu }}
+              memory: {{ .Values.migration.min_memory }}
+          {{- if .Values.migration.image }}
+          image: {{ printf "%s:%s" .Values.migration.image .Values.image_tag }}
+          {{- else }}
+          image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
           {{- end }}
-            memory: {{ .Values.migration.max_memory }}
-          requests:
-            cpu: {{ .Values.migration.min_cpu }}
-            memory: {{ .Values.migration.min_memory }}
-        {{- if .Values.migration.image }}
-        image: {{ printf "%s:%s" .Values.migration.image .Values.image_tag }}
-        {{- else }}
-        image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
-        {{- end }}
-        imagePullPolicy: {{ .Values.imagePullPolicy }}
-        command: {{ mustRegexSplit " +" .Values.migration.command -1 | toJson }}
-        env:
-          - name: APP
-            value: {{ .Release.Name }}
-          - name: ENV
-            value: {{ .Values.global.env }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          command: {{ mustRegexSplit " +" .Values.migration.command -1 | toJson }}
+          env:
+            - name: APP
+              value: {{ .Release.Name }}
+            - name: ENV
+              value: {{ .Values.global.env }}
 
-          #Range below is for environment variables
-          {{- range $key,$value:= .Values.parameters }}
-          - name: {{ upper $key | replace "-" "_" }}
-            value: {{ tpl ($value | toString) $ | quote }}
-          {{- end }}
+            #Range below is for environment variables
+            {{- range $key,$value:= .Values.parameters }}
+            - name: {{ upper $key | replace "-" "_" }}
+              value: {{ tpl ($value | toString) $ | quote }}
+            {{- end }}
 
-          #Range below is for secrets
-          {{- range $secret := .Values.secrets }}
-          - name: {{ upper $secret }}
-            valueFrom:
-              secretKeyRef:
-                name: {{ $secret | replace "_" "-" }}
-                key: value
-                optional: false
-          {{- end }}
-        volumeMounts:
-          - name: gcp-secret-store-vol
-            mountPath: "/var/secrets-store"
+            #Range below is for secrets
+            {{- range $secret := .Values.secrets }}
+            - name: {{ upper $secret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret | replace "_" "-" }}
+                  key: value
+                  optional: false
+            {{- end }}
+          volumeMounts:
+            - name: gcp-secret-store-vol
+              mountPath: "/var/secrets-store"
       volumes:
         - name: gcp-secret-store-vol
           csi:
