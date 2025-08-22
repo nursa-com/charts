@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Release.Name }}-migrator
+  name: {{ .Release.Name }}-migrator-{{ randAlphaNum 5 | lower }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "migration.labels" . | nindent 4 }}
@@ -10,8 +10,6 @@ spec:
   backoffLimit: 0
   template:
     metadata:
-      name: "{{ .Release.Name }}"
-      namespace: {{ .Release.Namespace }}
       labels:
         {{- include "migration.labels" . | nindent 8 }}
       annotations:
