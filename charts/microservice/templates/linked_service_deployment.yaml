@@ -46,7 +46,7 @@ spec:
             - name: {{ upper $secret }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ $secret | replace "_" "-" }}
+                  name: {{ $secret | lower | replace "_" "-" }}
                   key: value
                   optional: false
             {{- end }}
