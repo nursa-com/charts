@@ -46,7 +46,11 @@ spec:
             - name: {{ upper $secret }}
               valueFrom:
                 secretKeyRef:
+                  {{- if eq $.Values.global.env "stage" }}
+                  name: {{ $secret | lower | replace "_" "-" }}
+                  {{- else }}
                   name: {{ $secret | replace "_" "-" }}
+                  {{- end }}
                   key: value
                   optional: false
             {{- end }}
