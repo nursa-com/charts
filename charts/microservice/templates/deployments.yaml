@@ -51,7 +51,7 @@ spec:
             {{- end }}
             {{- end }}
             {{- range $secret := .Values.secrets }}
-            - name: {{ upper $secret }}
+            - name: {{ upper $secret | replace "-" "_" }}
               valueFrom:
                 secretKeyRef:
                   name: {{ $secret | replace "_" "-" }}
@@ -119,7 +119,7 @@ spec:
               value: {{ tpl ($value | toString) $ | quote }}
             {{- end }}
             {{- range $secret := .Values.secrets }}
-            - name: {{ upper $secret }}
+            - name: {{ upper $secret | replace "-" "_" }}
               valueFrom:
                 secretKeyRef:
                   name: {{ $secret | replace "_" "-" }}
@@ -200,7 +200,7 @@ spec:
             {{- end }}
             {{- end }}
             {{- range $secret := .Values.secrets }}
-            - name: {{ upper $secret }}
+            - name: {{ upper $secret | replace "-" "_" }}
               valueFrom:
                 secretKeyRef:
                   name: {{ $secret | replace "_" "-" }}

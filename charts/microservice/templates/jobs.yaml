@@ -54,7 +54,7 @@ spec:
 
             #Range below is for secrets
             {{- range $secret := .Values.secrets }}
-            - name: {{ upper $secret }}
+            - name: {{ upper $secret | replace "-" "_" }}
               valueFrom:
                 secretKeyRef:
                   name: {{ $secret | replace "_" "-" }}
