@@ -43,7 +43,7 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
             {{- range $secret := .Values.linked_service.parameters.secrets }}
-            - name: {{ upper $secret }}
+            - name: {{ upper $secret | replace "-" "_" }}
               valueFrom:
                 secretKeyRef:
                   name: {{ $secret | replace "_" "-" }}
