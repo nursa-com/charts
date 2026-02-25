@@ -1,4 +1,4 @@
 apiVersion: v2
 description: Microservice template
 name: microservice
-version: 1.7.57
+version: 1.8.0
