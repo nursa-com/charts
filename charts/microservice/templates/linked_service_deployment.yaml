@@ -50,9 +50,12 @@ spec:
                   key: value
                   optional: false
             {{- end }}
+          {{- if .Values.linked_service.parameters.secrets }}
           volumeMounts:
             - name: gcp-secret-store-vol
               mountPath: "/var/secrets-store"
+          {{- end }}
+      {{- if .Values.linked_service.parameters.secrets }}
       volumes:
         - name: gcp-secret-store-vol
           csi:
@@ -60,4 +63,5 @@ spec:
             readOnly: true
             volumeAttributes:
               secretProviderClass: {{ printf "gcp-secrets-%s" (include "appname" .)}}
+      {{- end }}
 {{- end }}
