@@ -1,0 +1,19 @@
+{{- if .Values.linked_service.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.linked_service.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.linked_service.name }}
+{{ include "linked_service.labels" $ | nindent 4 }}
+spec:
+  selector:
+    app: {{ .Values.linked_service.name }}
+  ports:
+    {{- range $port := .Values.linked_service.parameters.ports }}
+    - protocol: TCP
+      port: {{ $port.containerPort }}
+      targetPort: {{ $port.containerPort }}
+    {{- end }}
+{{- end }}

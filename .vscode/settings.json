@@ -1,0 +1,6 @@
+{
+  "yaml.validate": false,
+  "files.associations": {
+    "**/templates/*.yaml": "helm"
+  }
+}

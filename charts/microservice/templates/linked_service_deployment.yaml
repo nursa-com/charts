@@ -37,6 +37,19 @@ spec:
             limits:
               memory: {{ .Values.linked_service.parameters.resources.max_memory }}
               cpu: {{ .Values.linked_service.parameters.resources.max_cpu }}
+          {{- $lsProbe := .Values.linked_service.parameters.probeConfig | default dict }}
+          {{- if .Values.linked_service.parameters.startupProbe }}
+          startupProbe:
+            {{- merge $lsProbe .Values.linked_service.parameters.startupProbe | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.linked_service.parameters.livenessProbe }}
+          livenessProbe:
+            {{- merge $lsProbe .Values.linked_service.parameters.livenessProbe | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.linked_service.parameters.readinessProbe }}
+          readinessProbe:
+            {{- merge $lsProbe .Values.linked_service.parameters.readinessProbe | toYaml | nindent 12 }}
+          {{- end }}
           env:
             {{- range $key, $value := .Values.linked_service.parameters.env }}
             - name: {{ $key }}
