@@ -14,7 +14,6 @@ kind: PodDisruptionBudget
 metadata:
   name: {{ .Release.Name }}-worker-pdb
 spec:
-  minAvailable: {{ if (hasKey .Values.worker "pdbMinAvailable") }}{{ .Values.worker.pdbMinAvailable }}{{ else }}1{{ end }}
   selector:
     matchLabels:
       app: {{ .Release.Name }}-worker
