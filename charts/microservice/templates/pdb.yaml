@@ -14,7 +14,11 @@ kind: PodDisruptionBudget
 metadata:
   name: {{ .Release.Name }}-worker-pdb
 spec:
+  {{- if and (hasKey .Values.worker "pdbMaxUnavailable") (not (kindIs "invalid" .Values.worker.pdbMaxUnavailable)) }}
+  maxUnavailable: {{ .Values.worker.pdbMaxUnavailable }}
+  {{- else }}
   minAvailable: {{ if eq .Release.Namespace "stage0" }}1{{ else }}{{ if (hasKey .Values "pdbMinAvailable") }}{{ .Values.pdbMinAvailable }}{{ else }}1{{ end }}{{ end }}
+  {{- end }}
   selector:
     matchLabels:
       app: {{ .Release.Name }}-worker
