@@ -33,6 +33,10 @@ spec:
         {{- range $key,$value:= index .Values "deployment" "nodeSelector" }}
         {{ $key }}: {{ tpl ($value | toString) $ | quote }}
         {{- end }}
+      {{- if .Values.deployment.tolerations }}
+      tolerations:
+        {{- toYaml .Values.deployment.tolerations | nindent 8 }}
+      {{- end }}
       containers:
         - name: {{ .Release.Name }}
           image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
@@ -176,6 +180,11 @@ spec:
         {{- range $key,$value:= $nodeSelectors }}
         {{ $key }}: {{ tpl ($value | toString) $ | quote }}
         {{- end }}
+      {{- $tolerations := default .Values.deployment.tolerations (dig "deployment" "tolerations" nil .Values.worker) }}
+      {{- if $tolerations }}
+      tolerations:
+        {{- toYaml $tolerations | nindent 8 }}
+      {{- end }}
       containers:
         - name: {{ .Release.Name }}-worker
           image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
