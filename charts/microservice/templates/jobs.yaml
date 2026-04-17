@@ -2,10 +2,14 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Release.Name }}-migrator-{{ randAlphaNum 5 | lower }}
+  name: {{ .Release.Name }}-migrator
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "migration.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
 spec:
   backoffLimit: 0
   template:
