@@ -78,3 +78,85 @@ spec:
               secretProviderClass: {{ printf "gcp-secrets-%s" (include "appname" .)}}
       {{- end }}
 {{- end }}
+
+{{- range $svc := .Values.linked_services }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $svc.name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ $svc.name }}
+{{ include "linked_services.labels" (dict "name" $svc.name "ctx" $) | nindent 4 }}
+  annotations:
+{{ include "linked_services.annotations" (dict "name" $svc.name) | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ $svc.name }}
+  replicas: {{ $svc.parameters.replicas }}
+  template:
+    metadata:
+      labels:
+        app: {{ $svc.name }}
+{{ include "linked_services.labels" (dict "name" $svc.name "ctx" $) | nindent 8 }}
+      annotations:
+{{ include "linked_services.annotations" (dict "name" $svc.name) | nindent 8 }}
+    spec:
+      serviceAccountName: {{ $svc.parameters.serviceAccountName | default (include "appname" $) }}
+      containers:
+        - name: {{ $svc.name }}
+          image: {{ printf "%s:%s" $svc.parameters.image.repository (toString $svc.parameters.image.tag) }}
+          ports:
+            {{- range $port := $svc.parameters.ports }}
+            - containerPort: {{ $port.containerPort }}
+            {{- end }}
+          resources:
+            requests:
+              memory: {{ $svc.parameters.resources.min_memory }}
+              cpu: {{ $svc.parameters.resources.min_cpu }}
+            limits:
+              memory: {{ $svc.parameters.resources.max_memory }}
+              cpu: {{ $svc.parameters.resources.max_cpu }}
+          {{- $lsProbe := $svc.parameters.probeConfig | default dict }}
+          {{- if $svc.parameters.startupProbe }}
+          startupProbe:
+            {{- merge $lsProbe $svc.parameters.startupProbe | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $svc.parameters.livenessProbe }}
+          livenessProbe:
+            {{- merge $lsProbe $svc.parameters.livenessProbe | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $svc.parameters.readinessProbe }}
+          readinessProbe:
+            {{- merge $lsProbe $svc.parameters.readinessProbe | toYaml | nindent 12 }}
+          {{- end }}
+          env:
+            {{- range $key, $value := $svc.parameters.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- range $secret := $svc.parameters.secrets }}
+            - name: {{ upper $secret | replace "-" "_" }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret | replace "_" "-" }}
+                  key: value
+                  optional: false
+            {{- end }}
+          {{- if $svc.parameters.secrets }}
+          volumeMounts:
+            - name: gcp-secret-store-vol
+              mountPath: "/var/secrets-store"
+          {{- end }}
+      {{- if $svc.parameters.secrets }}
+      volumes:
+        - name: gcp-secret-store-vol
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ printf "gcp-secrets-%s" (include "appname" $) }}
+      {{- end }}
+{{- end }}

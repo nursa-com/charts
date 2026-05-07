@@ -17,3 +17,24 @@ spec:
       targetPort: {{ $port.containerPort }}
     {{- end }}
 {{- end }}
+
+{{- range $svc := .Values.linked_services }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $svc.name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ $svc.name }}
+{{ include "linked_services.labels" (dict "name" $svc.name "ctx" $) | nindent 4 }}
+spec:
+  selector:
+    app: {{ $svc.name }}
+  ports:
+    {{- range $port := $svc.parameters.ports }}
+    - protocol: TCP
+      port: {{ $port.containerPort }}
+      targetPort: {{ $port.containerPort }}
+    {{- end }}
+{{- end }}
