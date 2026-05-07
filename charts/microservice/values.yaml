@@ -183,7 +183,7 @@ init_container:
     - sleep
     - 10
 
-# DEPRECATED: prefer `linked_services` (list, see below). Kept for backwards compat.
+# DEPRECATED: change other places that are using this `linked_service` to use the new plural one (`linked_services`, see below).
 linked_service:
   enabled: false
 
