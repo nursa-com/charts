@@ -107,3 +107,27 @@ timestamp: {{ now | unixEpoch | quote }}
 "helm.sh/hook-weight": "0"
 "helm.sh/hook-delete-policy": hook-failed
 {{- end }}
+
+{{/*
+Parameterized helpers for the new `linked_services` (plural) list. Callers pass a dict
+with `name` (the service name) and `ctx` (root context, for labels that depend on global).
+The legacy `linked_service.*` helpers above stay for backwards compat with single-object users.
+*/}}
+
+{{- define "linked_services.annotations" -}}
+{{- $name := .name -}}
+timestamp: {{ now | unixEpoch | quote }}
+"ad.datadoghq.com/{{ $name }}.logs": |-
+  [{
+    "source":"{{ $name }}",
+    "tags":["pod_ip:%%host%%"]
+  }]
+{{- end }}
+
+{{- define "linked_services.labels" -}}
+{{- $name := .name -}}
+{{- with .ctx -}}
+{{ include "common.labels" . | trim }}
+{{- end }}
+"tags.datadoghq.com/service": {{ $name }}
+{{- end }}

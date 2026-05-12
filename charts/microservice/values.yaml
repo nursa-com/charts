@@ -183,5 +183,23 @@ init_container:
     - sleep
     - 10
 
+# DEPRECATED: change other places that are using this `linked_service` to use the new plural one (`linked_services`, see below).
 linked_service:
   enabled: false
+
+# Multiple linked services. Each entry produces one Deployment + ClusterIP Service in the
+# same Helm release as the parent microservice. Useful when the parent app needs >=1 sidekick
+# components (e.g. firecrawl-api + firecrawl-playwright + firecrawl-redis).
+#
+# Each entry has the same shape as `linked_service.parameters` plus a `name` field at the top.
+# Example:
+#   linked_services:
+#     - name: firecrawl
+#       parameters:
+#         replicas: 1
+#         image: { repository: ghcr.io/firecrawl/firecrawl, tag: "v1.x.x" }
+#         serviceAccountName: nursa-scraping
+#         ports: [{ containerPort: 3002 }]
+#         env: { USE_DB_AUTHENTICATION: "false" }
+#         resources: { min_memory: 512Mi, min_cpu: 200m, max_memory: 1Gi, max_cpu: 1 }
+linked_services: []
