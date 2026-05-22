@@ -51,6 +51,22 @@ debug:
 ## serviceAccount: microservice-sa
 serviceAccount: default-sa
 
+## Graceful shutdown configuration.
+## During a rolling deploy, Kubernetes sends SIGTERM and removes the pod from
+## Service endpoints in parallel. Without coordination, the pod may exit before
+## the LB / API Gateway stops routing to it, causing in-flight requests to fail
+## with connection-refused / ECONNREFUSED. Pair `terminationGracePeriodSeconds`
+## with a `lifecycle.preStop` `sleep` to drain endpoints before the process exits.
+##
+## Example:
+## terminationGracePeriodSeconds: 60
+## lifecycle:
+##   preStop:
+##     exec:
+##       command: ["/bin/sh", "-c", "sleep 30"]
+terminationGracePeriodSeconds:
+lifecycle:
+
 ## Type of Kubernetes service to connect to the app. ClusterIP is the default, but all others are supported.
 ## Check https://kubernetes.io/docs/concepts/services-networking/service/
 service:
