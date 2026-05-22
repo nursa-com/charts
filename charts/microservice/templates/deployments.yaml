@@ -28,6 +28,9 @@ spec:
         {{- include "common.annotations" . | nindent 8 }}
     spec:
       serviceAccountName: {{ default (include "appname" .) .Values.serviceAccount }}
+      {{- if .Values.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- end }}
       nodeSelector:
         iam.gke.io/gke-metadata-server-enabled: "true"
         {{- range $key,$value:= index .Values "deployment" "nodeSelector" }}
@@ -37,6 +40,10 @@ spec:
         - name: {{ .Release.Name }}
           image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
+          {{- if .Values.lifecycle }}
+          lifecycle:
+            {{- toYaml .Values.lifecycle | nindent 12 }}
+          {{- end }}
           env:
             - name: HANDLE_BROKER_MESSAGES
               value: {{ if (hasKey .Values "worker") }}{{ .Values.worker.enabled | not | quote }}{{ else }}{{ "true" | quote }}{{ end }}
@@ -170,6 +177,10 @@ spec:
         {{- include "common.annotations" . | nindent 8 }}
     spec:
       serviceAccountName: {{ default (include "appname" .) .Values.serviceAccount }}
+      {{- $workerTerminationGrace := default .Values.terminationGracePeriodSeconds (dig "terminationGracePeriodSeconds" nil .Values.worker) }}
+      {{- if $workerTerminationGrace }}
+      terminationGracePeriodSeconds: {{ $workerTerminationGrace }}
+      {{- end }}
       nodeSelector:
         iam.gke.io/gke-metadata-server-enabled: "true"
         {{- $nodeSelectors := default .Values.deployment.nodeSelector (dig "deployment" "nodeSelector" nil .Values.worker) }}
@@ -180,6 +191,11 @@ spec:
         - name: {{ .Release.Name }}-worker
           image: {{ printf "%s:%s" .Values.image .Values.image_tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
+          {{- $workerLifecycle := default .Values.lifecycle (dig "lifecycle" nil .Values.worker) }}
+          {{- if $workerLifecycle }}
+          lifecycle:
+            {{- toYaml $workerLifecycle | nindent 12 }}
+          {{- end }}
           env:
             - name: HANDLE_BROKER_MESSAGES
               value: "true"
