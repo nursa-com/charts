@@ -32,7 +32,12 @@ spec:
   policy:
     updateMode: Auto
 ---
-{{- if and (hasKey .Values "worker") .Values.worker.enabled }}
+{{/*
+  Worker MPA. Suppressed when worker.mpa.enabled is explicitly false — e.g. when
+  KEDA manages the worker's HPA (an MPA and an HPA cannot coexist on the same
+  Deployment). Defaults to true, so existing consumers are unaffected.
+*/}}
+{{- if and (hasKey .Values "worker") .Values.worker.enabled (ne (dig "mpa" "enabled" true .Values.worker) false) }}
 apiVersion: autoscaling.gke.io/v1beta1
 kind: MultidimPodAutoscaler
 metadata:
