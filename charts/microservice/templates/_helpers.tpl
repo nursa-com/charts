@@ -59,15 +59,18 @@ timestamp: {{ now | unixEpoch | quote }}
 
 {{- /*
   Worker pods run a container named "<release>-worker", so they need their own
-  Datadog log annotation keyed to that container name. Reusing common.annotations
-  (keyed to "<release>") silently no-ops on the worker container, which makes the
-  Datadog agent fall back to source:<image-name> instead of source:nestjs — the
-  NestJS pipeline never runs, debug logs are not status-remapped, and they leak
-  into the 30-day index. Mirror migration.annotations, which already does this.
+  Datadog log annotation keyed to that exact container name. Without a matching
+  key the agent falls back to source:<image-name> instead of source:nestjs — the
+  NestJS pipeline never runs, worker debug logs are not status-remapped, and they
+  leak into the 30-day index.
+
+  The key is built from .Release.Name (NOT the overrideName-aware "appname"
+  helper) so it always matches the worker container name, which deployments.yaml
+  hardcodes to "<.Release.Name>-worker" regardless of global.overrideName.
 */}}
 {{- define "worker.annotations" -}}
 timestamp: {{ now | unixEpoch | quote }}
-"ad.datadoghq.com/{{ include "appname" . }}-worker.logs": |-
+"ad.datadoghq.com/{{ .Release.Name }}-worker.logs": |-
   [{
     "source":"nestjs",
     "log_processing_rules": [{
