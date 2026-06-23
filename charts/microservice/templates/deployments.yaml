@@ -174,7 +174,7 @@ spec:
         tags.datadoghq.com/service: {{ .Release.Name }}-worker
         {{- include "worker.labels" . | nindent 8 }}
       annotations:
-        {{- include "common.annotations" . | nindent 8 }}
+        {{- include "worker.annotations" . | nindent 8 }}
     spec:
       serviceAccountName: {{ default (include "appname" .) .Values.serviceAccount }}
       {{- $workerTerminationGrace := default .Values.terminationGracePeriodSeconds (dig "terminationGracePeriodSeconds" nil .Values.worker) }}

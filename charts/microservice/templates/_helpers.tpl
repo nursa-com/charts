@@ -57,6 +57,28 @@ timestamp: {{ now | unixEpoch | quote }}
   }]
 {{- end }}
 
+{{- /*
+  Worker pods run a container named "<release>-worker", so they need their own
+  Datadog log annotation keyed to that container name. Reusing common.annotations
+  (keyed to "<release>") silently no-ops on the worker container, which makes the
+  Datadog agent fall back to source:<image-name> instead of source:nestjs — the
+  NestJS pipeline never runs, debug logs are not status-remapped, and they leak
+  into the 30-day index. Mirror migration.annotations, which already does this.
+*/}}
+{{- define "worker.annotations" -}}
+timestamp: {{ now | unixEpoch | quote }}
+"ad.datadoghq.com/{{ include "appname" . }}-worker.logs": |-
+  [{
+    "source":"nestjs",
+    "log_processing_rules": [{
+    "type":"multi_line",
+    "name": "nest_start_line",
+    "pattern": "\\[Nest\\]"
+    }],
+    "tags":["pod_ip:%%host%%"]
+  }]
+{{- end }}
+
 {{- define "sa.annotations" -}}
 "iam.gke.io/gcp-service-account": {{ printf "%s@%s.iam.gserviceaccount.com" .Values.serviceAccount .Values.global.project_id | quote }}
 "helm.sh/hook": pre-install
