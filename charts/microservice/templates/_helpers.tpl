@@ -57,6 +57,31 @@ timestamp: {{ now | unixEpoch | quote }}
   }]
 {{- end }}
 
+{{- /*
+  Worker pods run a container named "<release>-worker", so they need their own
+  Datadog log annotation keyed to that exact container name. Without a matching
+  key the agent falls back to source:<image-name> instead of source:nestjs — the
+  NestJS pipeline never runs, worker debug logs are not status-remapped, and they
+  leak into the 30-day index.
+
+  The key is built from .Release.Name (NOT the overrideName-aware "appname"
+  helper) so it always matches the worker container name, which deployments.yaml
+  hardcodes to "<.Release.Name>-worker" regardless of global.overrideName.
+*/}}
+{{- define "worker.annotations" -}}
+timestamp: {{ now | unixEpoch | quote }}
+"ad.datadoghq.com/{{ .Release.Name }}-worker.logs": |-
+  [{
+    "source":"nestjs",
+    "log_processing_rules": [{
+    "type":"multi_line",
+    "name": "nest_start_line",
+    "pattern": "\\[Nest\\]"
+    }],
+    "tags":["pod_ip:%%host%%"]
+  }]
+{{- end }}
+
 {{- define "sa.annotations" -}}
 "iam.gke.io/gcp-service-account": {{ printf "%s@%s.iam.gserviceaccount.com" .Values.serviceAccount .Values.global.project_id | quote }}
 "helm.sh/hook": pre-install
