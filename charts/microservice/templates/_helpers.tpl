@@ -22,12 +22,14 @@ version: {{ .Values.global.appVersion }}
 
 {{- define "app.labels" -}}
 {{- include "common.labels" . | trim }}
+microservice: "true"
 "tags.datadoghq.com/service": {{ include "appname" . }}
 "tags.datadoghq.com/version": {{ .Values.global.appVersion }}
 {{- end }}
 
 {{- define "worker.labels" -}}
 {{- include "common.labels" . | trim}}
+microservice: "true"
 "tags.datadoghq.com/service": {{ printf "%s-worker" (include "appname" .) }}
 "tags.datadoghq.com/version": {{ .Values.global.appVersion }}
 {{- end }}
