@@ -237,15 +237,15 @@ spec:
           {{- $workerReadinessProbe := default .Values.readinessProbe (dig "readinessProbe" nil .Values.worker) }}
           {{- if $workerStartupProbe }}
           startupProbe:
-            {{- merge (deepCopy $workerProbeConfig) $workerStartupProbe | toYaml | nindent 12 }}
+            {{- mergeOverwrite (deepCopy $workerProbeConfig) $workerStartupProbe | toYaml | nindent 12 }}
           {{- end }}
           {{- if $workerLivenessProbe }}
           livenessProbe:
-            {{- merge (deepCopy $workerProbeConfig) $workerLivenessProbe | toYaml | nindent 12 }}
+            {{- mergeOverwrite (deepCopy $workerProbeConfig) $workerLivenessProbe | toYaml | nindent 12 }}
           {{- end }}
           {{- if $workerReadinessProbe }}
           readinessProbe:
-            {{- merge (deepCopy $workerProbeConfig) $workerReadinessProbe | toYaml | nindent 12 }}
+            {{- mergeOverwrite (deepCopy $workerProbeConfig) $workerReadinessProbe | toYaml | nindent 12 }}
           {{- end }}
           resources:
             requests:
