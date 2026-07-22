@@ -227,6 +227,26 @@ spec:
             - name: gcp-secret-store-vol
               mountPath: "/var/secrets-store"
               readOnly: true
+          {{- /* Worker probes: default to the primary container's probe values so a
+                 crash-looping worker reports un-Ready and the deploy's `helm upgrade
+                 --atomic --wait` gate trips (DEVOPS-384). Override per-worker via
+                 `.Values.worker.{probeConfig,startupProbe,livenessProbe,readinessProbe}`. */}}
+          {{- $workerProbeConfig := default .Values.probeConfig (dig "probeConfig" nil .Values.worker) | default dict }}
+          {{- $workerStartupProbe := default .Values.startupProbe (dig "startupProbe" nil .Values.worker) }}
+          {{- $workerLivenessProbe := default .Values.livenessProbe (dig "livenessProbe" nil .Values.worker) }}
+          {{- $workerReadinessProbe := default .Values.readinessProbe (dig "readinessProbe" nil .Values.worker) }}
+          {{- if $workerStartupProbe }}
+          startupProbe:
+            {{- mergeOverwrite (deepCopy $workerProbeConfig) $workerStartupProbe | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $workerLivenessProbe }}
+          livenessProbe:
+            {{- mergeOverwrite (deepCopy $workerProbeConfig) $workerLivenessProbe | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $workerReadinessProbe }}
+          readinessProbe:
+            {{- mergeOverwrite (deepCopy $workerProbeConfig) $workerReadinessProbe | toYaml | nindent 12 }}
+          {{- end }}
           resources:
             requests:
               cpu: {{ default .Values.autoscaling.min_cpu (dig "autoscaling" "min_cpu" nil .Values.worker) }}
