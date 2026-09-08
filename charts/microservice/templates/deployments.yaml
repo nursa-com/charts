@@ -65,10 +65,12 @@ spec:
                   key: value
                   optional: false
             {{- end }}
+          {{- if $.Values.secrets }}
           volumeMounts:
             - name: gcp-secret-store-vol
               mountPath: "/var/secrets-store"
               readOnly: true
+          {{- end }}
           {{- if or .Values.service.internalPort (and .Values.debug.enabled .Values.debug.port) }}
           ports:
             {{- if .Values.service.internalPort }}
@@ -105,10 +107,12 @@ spec:
           {{- if .Values.debug.enabled }}
           command: {{ mustRegexSplit " +" .Values.debug.command -1 | toYaml | nindent 12 }}
           {{- end }}
+          {{- if $.Values.secrets }}
           volumeMounts:
             - name: gcp-secret-store-vol
               mountPath: "/var/secrets-store"
               readOnly: true
+          {{- end }}
       {{- if .Values.init_container.enabled }}
       initContainers:
         - name: {{ .Release.Name }}-init-script
@@ -133,11 +137,14 @@ spec:
                   key: value
                   optional: false
             {{- end }}
+          {{- if $.Values.secrets }}
           volumeMounts:
             - name: gcp-secret-store-vol
               mountPath: "/var/secrets-store"
               readOnly: true
+          {{- end }}
       {{- end }}
+      {{- if $.Values.secrets }}
       volumes:
         - name: gcp-secret-store-vol
           csi:
@@ -145,6 +152,7 @@ spec:
             readOnly: true
             volumeAttributes:
               secretProviderClass: {{ printf "gcp-secrets-%s" (include "appname" .)}}
+      {{- end }}
 ---
 {{- if and (hasKey .Values "worker") .Values.worker.enabled }}
 apiVersion: apps/v1
@@ -223,10 +231,12 @@ spec:
                   key: value
                   optional: false
             {{- end }}
+          {{- if $.Values.secrets }}
           volumeMounts:
             - name: gcp-secret-store-vol
               mountPath: "/var/secrets-store"
               readOnly: true
+          {{- end }}
           {{- /* Worker probes: default to the primary container's probe values so a
                  crash-looping worker reports un-Ready and the deploy's `helm upgrade
                  --atomic --wait` gate trips (DEVOPS-384). Override per-worker via
@@ -256,6 +266,7 @@ spec:
               cpu: {{ default .Values.autoscaling.max_cpu (dig "autoscaling" "max_cpu" nil .Values.worker) }}
               {{- end }}
               memory: {{ default .Values.autoscaling.max_memory (dig "autoscaling" "max_memory" nil .Values.worker) }}
+      {{- if $.Values.secrets }}
       volumes:
         - name: gcp-secret-store-vol
           csi:
@@ -263,4 +274,5 @@ spec:
             readOnly: true
             volumeAttributes:
               secretProviderClass: {{ printf "gcp-secrets-%s" (include "appname" .)}}
+      {{- end }}
 {{- end }}
