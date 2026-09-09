@@ -64,11 +64,14 @@ spec:
                   optional: false
             {{- end }}
           {{- if .Values.linked_service.parameters.secrets }}
+          {{- if $.Values.secrets }}
           volumeMounts:
             - name: gcp-secret-store-vol
               mountPath: "/var/secrets-store"
           {{- end }}
+          {{- end }}
       {{- if .Values.linked_service.parameters.secrets }}
+      {{- if $.Values.secrets }}
       volumes:
         - name: gcp-secret-store-vol
           csi:
@@ -76,6 +79,7 @@ spec:
             readOnly: true
             volumeAttributes:
               secretProviderClass: {{ printf "gcp-secrets-%s" (include "appname" .)}}
+      {{- end }}
       {{- end }}
 {{- end }}
 
@@ -146,11 +150,14 @@ spec:
                   optional: false
             {{- end }}
           {{- if $svc.parameters.secrets }}
+          {{- if $.Values.secrets }}
           volumeMounts:
             - name: gcp-secret-store-vol
               mountPath: "/var/secrets-store"
           {{- end }}
+          {{- end }}
       {{- if $svc.parameters.secrets }}
+      {{- if $.Values.secrets }}
       volumes:
         - name: gcp-secret-store-vol
           csi:
@@ -158,5 +165,6 @@ spec:
             readOnly: true
             volumeAttributes:
               secretProviderClass: {{ printf "gcp-secrets-%s" (include "appname" $) }}
+      {{- end }}
       {{- end }}
 {{- end }}
