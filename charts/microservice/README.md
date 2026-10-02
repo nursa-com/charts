@@ -85,7 +85,7 @@ helm install <release-name> <parent_chart> --set "microservice.image_tag=$image_
 
 ### GCPBackendPolicy (opt-in)
 
-Set `backendPolicy.enabled: true` to render a `networking.gke.io/v1` `GCPBackendPolicy` targeting the app's Service. It is off by default and only rendered when the Service exists (`service.internalPort` set). Supported values: `securityPolicy` (Cloud Armor policy name), `timeoutSec`, `drainingTimeoutSec` (connection draining), `loggingEnabled` (default `true`) and `name` (default `<release name>-backend-config`). GKE allows only one GCPBackendPolicy per Service, so an app enabling this must not also ship its own policy for the same Service. See `values.yaml`.
+Set `backendPolicy.enabled: true` to render a `networking.gke.io/v1` `GCPBackendPolicy` targeting the app's Service. It is off by default and only rendered when the Service exists (`service.internalPort` set, or `debug.enabled` is true with `debug.port` set). Supported values: `securityPolicy` (Cloud Armor policy name), `timeoutSec`, `drainingTimeoutSec` (connection draining), `loggingEnabled` (default `true`) and `name` (default `<release name>-backend-config`). GKE allows only one GCPBackendPolicy per Service, so an app enabling this must not also ship its own policy for the same Service. See `values.yaml`.
 
 ### Resource requests and limits
 

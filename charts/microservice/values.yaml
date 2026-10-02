@@ -142,7 +142,7 @@ api_gateway:
   redirects:
 
 ## Opt-in GKE GCPBackendPolicy attached to this app's Service (e.g. Cloud Armor, LB timeout, draining).
-## Off by default. Rendered only when enabled is true AND the Service exists (service.internalPort set).
+## Off by default. Rendered only when enabled is true AND the Service exists (service.internalPort set, or debug.enabled is true with debug.port set).
 ## GKE allows ONE GCPBackendPolicy per Service: do not also ship a policy of your own for the same Service.
 ## Example:
 ## backendPolicy:
