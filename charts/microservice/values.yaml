@@ -141,6 +141,25 @@ api_gateway:
 ## Leave it blank if there are no redirects
   redirects:
 
+## Opt-in GKE GCPBackendPolicy attached to this app's Service (e.g. Cloud Armor, LB timeout, draining).
+## Off by default. Rendered only when enabled is true AND the Service exists (service.internalPort set).
+## GKE allows ONE GCPBackendPolicy per Service: do not also ship a policy of your own for the same Service.
+## Example:
+## backendPolicy:
+##   enabled: true
+##   securityPolicy: public-gateway-visitor-ip   # Cloud Armor policy name, omitted when empty
+##   timeoutSec: 86400                           # LB backend timeout, omitted when 0/empty
+##   drainingTimeoutSec: 15                      # LB connection draining (0-3600), omitted when 0/empty
+##   loggingEnabled: true                        # LB request logging, defaults to true
+##   name: ""                                    # defaults to "<release name>-backend-config"
+backendPolicy:
+  enabled: false
+  name: ""
+  securityPolicy: ""
+  timeoutSec: 0
+  drainingTimeoutSec: 0
+  loggingEnabled: true
+
 ## Creates the health checks configs:
 ## Startup probes: recognizes that the app has started, and starts the next probes
 ## Readiness probes: recognizes if the pod is ready to receive requests. If not, no packets are sent to the pod

@@ -83,6 +83,10 @@ and if you are using the chart as a dependency:
 helm install <release-name> <parent_chart> --set "microservice.image_tag=$image_tag"
 ```
 
+### GCPBackendPolicy (opt-in)
+
+Set `backendPolicy.enabled: true` to render a `networking.gke.io/v1` `GCPBackendPolicy` targeting the app's Service. It is off by default and only rendered when the Service exists (`service.internalPort` set). Supported values: `securityPolicy` (Cloud Armor policy name), `timeoutSec`, `drainingTimeoutSec` (connection draining), `loggingEnabled` (default `true`) and `name` (default `<release name>-backend-config`). GKE allows only one GCPBackendPolicy per Service, so an app enabling this must not also ship its own policy for the same Service. See `values.yaml`.
+
 ### Resource requests and limits
 
 This chart allows setting min/max resources for all containers inside the chart deployment. Setting requests is essential for production workloads and these should be adapted to your specific use case.

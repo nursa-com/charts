@@ -1,0 +1,30 @@
+{{- /*
+  Opt-in GCPBackendPolicy for the app's Service (GKE Gateway). Rendered only when the
+  Service exists AND backendPolicy.enabled is true. GKE allows a single GCPBackendPolicy
+  per Service, so an app must not also ship its own policy for the same Service.
+*/ -}}
+{{- if and .Values.backendPolicy.enabled (or .Values.service.internalPort (and (eq .Values.debug.enabled true) .Values.debug.port)) }}
+apiVersion: networking.gke.io/v1
+kind: GCPBackendPolicy
+metadata:
+  name: {{ default (printf "%s-backend-config" .Release.Name) .Values.backendPolicy.name | quote }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  default:
+    {{- if .Values.backendPolicy.securityPolicy }}
+    securityPolicy: {{ .Values.backendPolicy.securityPolicy | quote }}
+    {{- end }}
+    {{- if .Values.backendPolicy.timeoutSec }}
+    timeoutSec: {{ .Values.backendPolicy.timeoutSec }}
+    {{- end }}
+    {{- if .Values.backendPolicy.drainingTimeoutSec }}
+    connectionDraining:
+      drainingTimeoutSec: {{ .Values.backendPolicy.drainingTimeoutSec }}
+    {{- end }}
+    logging:
+      enabled: {{ if kindIs "bool" .Values.backendPolicy.loggingEnabled }}{{ .Values.backendPolicy.loggingEnabled }}{{ else }}true{{ end }}
+  targetRef:
+    group: ""
+    kind: Service
+    name: {{ include "appname" . | quote }}
+{{- end }}
