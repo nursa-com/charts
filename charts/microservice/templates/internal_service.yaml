@@ -22,7 +22,6 @@ metadata:
     {{- include "app.labels" . | nindent 4 }}
     app: {{ $name }}
 spec:
-  type: {{ .Values.service.type }}
   selector:
     {{- include "microservice.selectorLabels" . | nindent 4 }}
   ports:
@@ -84,6 +83,9 @@ spec:
     {{- end }}
     logging:
       enabled: {{ if kindIs "bool" $loggingEnabled }}{{ $loggingEnabled }}{{ else }}true{{ end }}
+      {{- if or (not (kindIs "bool" $loggingEnabled)) $loggingEnabled }}
+      sampleRate: 1000000
+      {{- end }}
   targetRef:
     group: ""
     kind: Service
