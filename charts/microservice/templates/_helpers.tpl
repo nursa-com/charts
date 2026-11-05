@@ -41,6 +41,11 @@ app: {{ printf "%s-migrator" .Release.Name }}
 "tags.datadoghq.com/version": {{ .Values.global.appVersion }}
 {{- end }}
 
+{{- define "microservice.selectorLabels" -}}
+app: {{ .Release.Name }}
+component: primary
+{{- end }}
+
 #-------------------------------------------------------------------------------
 #---- DEFINING ANNOTATIONS                                                 ----
 #-------------------------------------------------------------------------------

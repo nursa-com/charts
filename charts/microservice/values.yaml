@@ -160,6 +160,39 @@ backendPolicy:
   drainingTimeoutSec: 0
   loggingEnabled: true
 
+## Opt-in second Service ("<appname>-internal") for a second Gateway (e.g. a regional internal gateway).
+## GKE will not attach a Cloud Armor policy to a Service that backs both the internal and the global external
+## gateway, so each GatewayClass needs its own Service. Off by default. Rendered only when enabled is true AND
+## service.internalPort is set (the render fails otherwise). Same selector and main port as the main Service
+## (no debug port); point the other gateway's HTTPRoute backendRef at this Service.
+## backendPolicy keys left unset (null) inherit from .Values.backendPolicy. securityPolicy is NEVER inherited or
+## set here: it belongs on the main (public) Service only.
+## Example:
+## internalService:
+##   enabled: true
+##   name: ""                  # defaults to "<appname>-internal"
+##   healthCheck:
+##     enabled: true           # HealthCheckPolicy for the internal Service
+##     requestPath: /api/health  # defaults to api_gateway.health_endpoint
+##   backendPolicy:
+##     enabled: true
+##     name: ""                # defaults to "<internal Service name>-backend-config"
+##     timeoutSec: 60          # null inherits backendPolicy.timeoutSec
+##     drainingTimeoutSec: null
+##     loggingEnabled: null
+internalService:
+  enabled: false
+  name: ""
+  healthCheck:
+    enabled: true
+    requestPath: ""
+  backendPolicy:
+    enabled: true
+    name: ""
+    timeoutSec: null
+    drainingTimeoutSec: null
+    loggingEnabled: null
+
 ## Creates the health checks configs:
 ## Startup probes: recognizes that the app has started, and starts the next probes
 ## Readiness probes: recognizes if the pod is ready to receive requests. If not, no packets are sent to the pod
