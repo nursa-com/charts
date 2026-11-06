@@ -1,0 +1,94 @@
+{{- /*
+  Opt-in second Service for a second Gateway (GKE will not attach a Cloud Armor policy to a Service that
+  backs both the internal and the external gateway). Rendered only when internalService.enabled is true.
+  The selector comes from the same helper as the main Service so the two cannot drift. securityPolicy is
+  never emitted here: it belongs on the main (public) Service only.
+*/ -}}
+{{- if .Values.internalService.enabled }}
+{{- if not .Values.service.internalPort }}
+{{- fail "internalService.enabled requires service.internalPort to be set" }}
+{{- end }}
+{{- $name := default (printf "%s-internal" (include "appname" .)) .Values.internalService.name }}
+{{- if eq $name (include "appname" .) }}
+{{- fail (printf "internalService.name resolves to %q, which is the main Service name; it must differ" $name) }}
+{{- end }}
+{{- $hc := default dict .Values.internalService.healthCheck }}
+{{- $own := default dict .Values.internalService.backendPolicy }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+    app: {{ $name }}
+spec:
+  selector:
+    {{- include "microservice.selectorLabels" . | nindent 4 }}
+  ports:
+  - name: {{ include "appname" . }}-port
+    protocol: TCP
+    port: {{ .Values.service.internalPort }}
+    targetPort: {{ .Values.service.internalPort }}
+{{- if $hc.enabled }}
+{{- $path := default .Values.api_gateway.health_endpoint $hc.requestPath }}
+{{- if not $path }}
+{{- fail "internalService.healthCheck.enabled requires internalService.healthCheck.requestPath or api_gateway.health_endpoint" }}
+{{- end }}
+
+---
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: {{ $name }}-healthcheck
+spec:
+  default:
+    checkIntervalSec: 10
+    timeoutSec: 2
+    healthyThreshold: 2
+    unhealthyThreshold: 1
+    logConfig:
+      enabled: true
+    config:
+      type: HTTP
+      httpHealthCheck:
+        portSpecification: USE_FIXED_PORT
+        port: {{ .Values.service.internalPort }}
+        host: "gcp-lb-health-check"
+        requestPath: {{ $path }}
+  targetRef:
+    group: ""
+    kind: Service
+    name: {{ $name }}
+{{- end }}
+{{- if $own.enabled }}
+{{- $main := .Values.backendPolicy }}
+{{- $timeoutSec := ternary $main.timeoutSec $own.timeoutSec (kindIs "invalid" $own.timeoutSec) }}
+{{- $drainingTimeoutSec := ternary $main.drainingTimeoutSec $own.drainingTimeoutSec (kindIs "invalid" $own.drainingTimeoutSec) }}
+{{- $loggingEnabled := ternary $main.loggingEnabled $own.loggingEnabled (kindIs "invalid" $own.loggingEnabled) }}
+
+---
+apiVersion: networking.gke.io/v1
+kind: GCPBackendPolicy
+metadata:
+  name: {{ default (printf "%s-backend-config" $name) $own.name | quote }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  default:
+    {{- if $timeoutSec }}
+    timeoutSec: {{ $timeoutSec }}
+    {{- end }}
+    {{- if $drainingTimeoutSec }}
+    connectionDraining:
+      drainingTimeoutSec: {{ $drainingTimeoutSec }}
+    {{- end }}
+    logging:
+      enabled: {{ if kindIs "bool" $loggingEnabled }}{{ $loggingEnabled }}{{ else }}true{{ end }}
+      {{- if or (not (kindIs "bool" $loggingEnabled)) $loggingEnabled }}
+      sampleRate: 1000000
+      {{- end }}
+  targetRef:
+    group: ""
+    kind: Service
+    name: {{ $name | quote }}
+{{- end }}
+{{- end }}

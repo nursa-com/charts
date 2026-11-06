@@ -87,6 +87,15 @@ helm install <release-name> <parent_chart> --set "microservice.image_tag=$image_
 
 Set `backendPolicy.enabled: true` to render a `networking.gke.io/v1` `GCPBackendPolicy` targeting the app's Service. It is off by default and only rendered when the Service exists (`service.internalPort` set, or `debug.enabled` is true with `debug.port` set). Supported values: `securityPolicy` (Cloud Armor policy name), `timeoutSec`, `drainingTimeoutSec` (connection draining), `loggingEnabled` (default `true`) and `name` (default `<release name>-backend-config`). GKE allows only one GCPBackendPolicy per Service, so an app enabling this must not also ship its own policy for the same Service. See `values.yaml`.
 
+### Internal Service for a second Gateway (opt-in)
+
+GKE will not attach a Cloud Armor policy (`GCPBackendPolicy.securityPolicy`) to a Service that is a backend of both a regional internal gateway (`gke-l7-rilb`) and the global external gateway; each GatewayClass needs its own Service. Set `internalService.enabled: true` (requires `service.internalPort`, the render fails otherwise) to render a second Service `<appname>-internal` (override with `internalService.name`) with the same selector as the main Service and only the main app port (no debug port), plus:
+
+- a `HealthCheckPolicy` (`internalService.healthCheck.enabled`, default `true`) targeting it, with `requestPath` from `internalService.healthCheck.requestPath`, else `api_gateway.health_endpoint` (the render fails if both are empty). It is not gated on `api_gateway.expose`.
+- a `GCPBackendPolicy` (`internalService.backendPolicy.enabled`, default `true`, name `<internal Service name>-backend-config`). `timeoutSec`, `drainingTimeoutSec` and `loggingEnabled` inherit from `backendPolicy.*` when left `null`; any other value, including `0` or `false`, overrides. Note that an explicit `timeoutSec: 0` overrides rather than inherits, and the field is then omitted from the rendered policy, so GKE's default (30s) applies. `securityPolicy` is never inherited or set: it belongs on the main (public) Service only.
+
+The chart does not route to the internal Service. The consumer must point its regional HTTPRoute `backendRef` at `<appname>-internal`. Rollout order: (1) enable `internalService` and let its NEG go healthy, (2) repoint the internal route at it, (3) set `backendPolicy.securityPolicy` on the main Service.
+
 ### Resource requests and limits
 
 This chart allows setting min/max resources for all containers inside the chart deployment. Setting requests is essential for production workloads and these should be adapted to your specific use case.
