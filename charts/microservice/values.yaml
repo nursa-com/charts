@@ -224,7 +224,7 @@ alloydbAuthProxy:
   port: 5432            # proxy listener on 127.0.0.1, and the value of REPORTING_AUTH_PROXY_PORT
   healthPort: 9090      # health check server (--http-port), bound on 0.0.0.0 so kubelet probes reach it
   publicIp: false       # adds --public-ip; private IP is the proxy's default
-  resources:            # counted in the pod's requests (scheduling, autoscaler utilization); no CPU limit
+  resources:            # counted in the pod's requests (scheduling, autoscaler utilization); no CPU limit. MPA bounds for the proxy are requests.memory (min) and limits.memory (max), both required
     requests:
       cpu: 50m
       memory: 64Mi

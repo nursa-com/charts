@@ -250,6 +250,33 @@ timestamp: {{ now | unixEpoch | quote }}
 {{- end }}
 
 {{- /*
+  The MPA constraints.container entry for the proxy sidecar, so the app's
+  autoscaling.min_memory/max_memory (the '*' entry) never floor or scale the
+  proxy's memory request. The MPA CRD's container entries accept only name and
+  requests, so the proxy gets its own bounds rather than an exclusion: the
+  request floor is the proxy's memory request and the ceiling is its memory
+  limit. CPU is not bounded because containerControlledResources is memory only.
+  Call with the root context, only for a Deployment that runs the proxy.
+*/}}
+{{- define "alloydbAuthProxy.mpaConstraint" -}}
+{{- $res := dig "resources" dict (.Values.alloydbAuthProxy | default dict) | default dict -}}
+{{- $minMemory := dig "requests" "memory" "" $res -}}
+{{- $maxMemory := dig "limits" "memory" "" $res -}}
+{{- if not $minMemory -}}
+{{- fail "alloydbAuthProxy.resources.requests.memory is required when the AlloyDB Auth Proxy is enabled: it is the lower MPA memory bound for the proxy container" -}}
+{{- end -}}
+{{- if not $maxMemory -}}
+{{- fail "alloydbAuthProxy.resources.limits.memory is required when the AlloyDB Auth Proxy is enabled: it is the upper MPA memory bound for the proxy container" -}}
+{{- end -}}
+- name: alloydb-auth-proxy
+  requests:
+    minAllowed:
+      memory: {{ $minMemory }}
+    maxAllowed:
+      memory: {{ $maxMemory }}
+{{- end }}
+
+{{- /*
   The REPORTING_AUTH_PROXY_PORT env entry for an app container whose pod runs the
   proxy, so the app and the proxy always agree on the port. Call with
   (dict "ctx" $ "params" (list <parameters maps the container renders>)).

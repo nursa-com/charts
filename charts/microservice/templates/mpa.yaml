@@ -29,6 +29,9 @@ spec:
           memory: {{ .Values.autoscaling.min_memory }}
         maxAllowed:
           memory: {{ .Values.autoscaling.max_memory }}
+    {{- if include "alloydbAuthProxy.enabled" (dict "ctx" $ "target" "primary") }}
+    {{- include "alloydbAuthProxy.mpaConstraint" . | nindent 4 }}
+    {{- end }}
   policy:
     updateMode: Auto
 ---
@@ -69,6 +72,9 @@ spec:
           memory: {{ default .Values.autoscaling.min_memory (dig "autoscaling" "min_memory" nil .Values.worker) }}
         maxAllowed:
           memory: {{ default .Values.autoscaling.max_memory (dig "autoscaling" "max_memory" nil .Values.worker) }}
+    {{- if include "alloydbAuthProxy.enabled" (dict "ctx" $ "target" "worker") }}
+    {{- include "alloydbAuthProxy.mpaConstraint" . | nindent 4 }}
+    {{- end }}
   policy:
     updateMode: Auto
 {{- end }}
