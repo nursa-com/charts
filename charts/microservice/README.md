@@ -23,7 +23,7 @@ The charts in this repository are public, and easily downloaded and reused. We r
 
 ## Prerequisites
 
-- Kubernetes 1.26+
+- Kubernetes 1.26+ (1.29+ to enable the opt-in AlloyDB Auth Proxy sidecar, which is a native sidecar; prod GKE runs 1.33)
 - Helm 3.8.0+
 
 ## Using the Chart in a microservice
@@ -95,6 +95,28 @@ GKE will not attach a Cloud Armor policy (`GCPBackendPolicy.securityPolicy`) to 
 - a `GCPBackendPolicy` (`internalService.backendPolicy.enabled`, default `true`, name `<internal Service name>-backend-config`). `timeoutSec`, `drainingTimeoutSec` and `loggingEnabled` inherit from `backendPolicy.*` when left `null`; any other value, including `0` or `false`, overrides. Note that an explicit `timeoutSec: 0` overrides rather than inherits, and the field is then omitted from the rendered policy, so GKE's default (30s) applies. `securityPolicy` is never inherited or set: it belongs on the main (public) Service only.
 
 The chart does not route to the internal Service. The consumer must point its regional HTTPRoute `backendRef` at `<appname>-internal`. Rollout order: (1) enable `internalService` and let its NEG go healthy, (2) repoint the internal route at it, (3) set `backendPolicy.securityPolicy` on the main Service.
+
+### AlloyDB Auth Proxy sidecar (opt-in)
+
+Set `alloydbAuthProxy.enabled: true` and `alloydbAuthProxy.instanceUri` (`projects/PROJECT/locations/REGION/clusters/CLUSTER/instances/INSTANCE`) to run Google's [AlloyDB Auth Proxy](https://github.com/GoogleCloudPlatform/alloydb-auth-proxy) next to the app, listening on `127.0.0.1:<port>` (default `5432`). It is off by default, and the render fails if it is enabled for either Deployment while `instanceUri` is empty.
+
+- **Native sidecar.** The proxy is rendered as the first `initContainers` entry with `restartPolicy: Always`, which needs Kubernetes 1.29+ (prod GKE runs 1.33; the chart does not check the version at render time). The kubelet starts any `init_container` and the app container only after the proxy's `startupProbe` (`/startup`) passes, and restarts the proxy on its own if it exits or fails its `livenessProbe` (`/liveness`). `/startup` passes once the proxy's listener is up; it does not wait for a connection to the instance, so an unreachable instance does not hold the app back.
+- **No readinessProbe, on purpose.** A native sidecar's readiness counts toward the pod's, so a proxy readiness probe would take API pods out of their Service whenever the proxy reported not-ready. The upstream help says its `/readiness` also fails while an instance is unreachable, which would mean API pods dropping out whenever the database is down. The proxy's health is covered by the startup and liveness probes and by its restarts.
+- **Port wiring.** The app container of each Deployment running the proxy gets `REPORTING_AUTH_PROXY_PORT` set to `alloydbAuthProxy.port`, so the two cannot drift. The render fails if `parameters` (or `worker.parameters`, for the worker) also sets `REPORTING_AUTH_PROXY_PORT`. The health server listens on `alloydbAuthProxy.healthPort` (default `9090`) on all pod addresses so kubelet probes reach it; neither port may collide with a port the app listens on, since the containers share the pod's network.
+- **Worker-only opt-in.** The worker inherits `alloydbAuthProxy.enabled`. `worker.alloydbAuthProxy.enabled` overrides only that flag, for the worker: `true` turns it on for the worker alone, and an explicit `false` turns it off for the worker while the primary keeps it. All other settings come from the top-level block.
+
+  ```yaml
+  alloydbAuthProxy:
+    instanceUri: projects/PROJECT/locations/REGION/clusters/CLUSTER/instances/INSTANCE
+  worker:
+    enabled: true
+    alloydbAuthProxy:
+      enabled: true
+  ```
+- **IAM.** The proxy authenticates as the pod's service account through Workload Identity. That GSA needs `roles/alloydb.client` and `roles/serviceusage.serviceUsageConsumer` in the project holding the cluster. Set `publicIp: true` only to connect over the instance's public IP (adds `--public-ip`); private IP is the default.
+- **Resources.** `alloydbAuthProxy.resources` (default requests `50m` CPU / `64Mi`, memory limit `256Mi`, no CPU limit) is added to the pod's total requests.
+
+The migration Job and linked services never get the proxy.
 
 ### Resource requests and limits
 
