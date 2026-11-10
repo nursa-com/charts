@@ -113,6 +113,8 @@ Set `alloydbAuthProxy.enabled: true` and `alloydbAuthProxy.instanceUri` (`projec
     alloydbAuthProxy:
       enabled: true
   ```
+
+  `worker.enabled: true` is what creates the worker Deployment; the `alloydbAuthProxy` override only decides whether that Deployment gets the proxy.
 - **IAM.** The proxy authenticates as the pod's service account through Workload Identity. That GSA needs `roles/alloydb.client` and `roles/serviceusage.serviceUsageConsumer` in the project holding the cluster. Set `publicIp: true` only to connect over the instance's public IP (adds `--public-ip`); private IP is the default.
 - **Resources.** `alloydbAuthProxy.resources` (default requests `50m` CPU / `64Mi`, memory limit `256Mi`, no CPU limit) is added to the pod's total requests.
 

@@ -204,6 +204,12 @@ timestamp: {{ now | unixEpoch | quote }}
 {{- if not $cfg.instanceUri -}}
 {{- fail "alloydbAuthProxy.instanceUri is required when the AlloyDB Auth Proxy is enabled for the primary or the worker (projects/PROJECT/locations/REGION/clusters/CLUSTER/instances/INSTANCE)" -}}
 {{- end -}}
+{{- if or (not $cfg.port) (eq ($cfg.port | toString) "0") -}}
+{{- fail "alloydbAuthProxy.port must be a non-zero port number when the AlloyDB Auth Proxy is enabled for the primary or the worker (default 5432)" -}}
+{{- end -}}
+{{- if or (not $cfg.healthPort) (eq ($cfg.healthPort | toString) "0") -}}
+{{- fail "alloydbAuthProxy.healthPort must be a non-zero port number when the AlloyDB Auth Proxy is enabled for the primary or the worker (default 9090)" -}}
+{{- end -}}
 - name: alloydb-auth-proxy
   image: {{ printf "%s:%s" $cfg.image ($cfg.tag | toString) }}
   imagePullPolicy: {{ $cfg.imagePullPolicy }}
