@@ -193,6 +193,44 @@ internalService:
     drainingTimeoutSec: null
     loggingEnabled: null
 
+## Opt-in AlloyDB Auth Proxy sidecar (DEVOPS-513), for apps that reach an AlloyDB instance through
+## the proxy on the pod's loopback. Off by default. Rendered as a native sidecar (an initContainers
+## entry with restartPolicy: Always, Kubernetes 1.29+), first in the list, so the app container
+## starts only after the proxy's /startup probe passes. While enabled for a Deployment, the chart
+## sets REPORTING_AUTH_PROXY_PORT on that Deployment's app container to `port`, and the render fails
+## if parameters (or worker.parameters, for the worker) also set it. The render also fails when the
+## proxy is enabled for either Deployment and instanceUri is empty.
+## The proxy has a startupProbe (/startup) and a livenessProbe (/liveness) but deliberately NO
+## readinessProbe: a native sidecar's readiness counts toward the pod's, so a not-ready proxy (upstream
+## documents /readiness as failing while the instance is unreachable) would take API pods out of their Service.
+## It uses the pod's service account (Workload Identity); that GSA needs roles/alloydb.client and
+## roles/serviceusage.serviceUsageConsumer. The migration Job and linked services never get it.
+## Example (worker only, e.g. backend-worker):
+## alloydbAuthProxy:
+##   instanceUri: projects/PROJECT/locations/REGION/clusters/CLUSTER/instances/INSTANCE
+## worker:
+##   alloydbAuthProxy:
+##     enabled: true   # overrides only `enabled`; unset inherits alloydbAuthProxy.enabled, false turns it off
+## Example (primary and worker):
+## alloydbAuthProxy:
+##   enabled: true
+##   instanceUri: projects/PROJECT/locations/REGION/clusters/CLUSTER/instances/INSTANCE
+alloydbAuthProxy:
+  enabled: false        # primary Deployment; the worker inherits it unless worker.alloydbAuthProxy.enabled is set
+  instanceUri: ""       # projects/PROJECT/locations/REGION/clusters/CLUSTER/instances/INSTANCE
+  image: gcr.io/alloydb-connectors/alloydb-auth-proxy
+  tag: "1.17.2"
+  imagePullPolicy: IfNotPresent
+  port: 5432            # proxy listener on 127.0.0.1, and the value of REPORTING_AUTH_PROXY_PORT
+  healthPort: 9090      # health check server (--http-port), bound on 0.0.0.0 so kubelet probes reach it
+  publicIp: false       # adds --public-ip; private IP is the proxy's default
+  resources:            # counted in the pod's requests (scheduling, autoscaler utilization); no CPU limit
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
 ## Creates the health checks configs:
 ## Startup probes: recognizes that the app has started, and starts the next probes
 ## Readiness probes: recognizes if the pod is ready to receive requests. If not, no packets are sent to the pod
