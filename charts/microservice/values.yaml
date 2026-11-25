@@ -113,6 +113,10 @@ deployment:
 # rolloutUnavailable: 20%
   rolloutUnavailable: 0
 
+## Seconds a new pod must stay Ready before the rollout counts it as available and moves on.
+## Unset (the default) leaves the field out, so Kubernetes uses 0.
+# minReadySeconds: 20
+
 job:
   nodeSelector: {}
 
