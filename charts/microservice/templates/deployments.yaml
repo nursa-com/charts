@@ -15,6 +15,9 @@ spec:
     rollingUpdate:
       maxSurge: {{ .Values.deployment.rolloutSurge }}
       maxUnavailable: {{ .Values.deployment.rolloutUnavailable }}
+  {{- with .Values.deployment.minReadySeconds }}
+  minReadySeconds: {{ . }}
+  {{- end }}
   selector:
     matchLabels:
       app: {{ .Release.Name }}
